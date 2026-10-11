@@ -68,7 +68,13 @@ object InnerTubeXPlayer {
         if (applicationContext == null) applicationContext = context.applicationContext
     }
 
-    suspend fun prewarm() = bundle().extractor.prewarm()
+    suspend fun prewarm() {
+        runCatching { bundle().extractor.prewarm() }
+        runCatching {
+            // Warm up the PoToken WebView & BotGuard JS in the background so cold-start playback is instant
+            poTokenGenerator.getWebClientPoToken(POTOKEN_WARMUP_VIDEO_ID, "")
+        }
+    }
 
     suspend fun playerResponseForPlayback(
         videoId: String,

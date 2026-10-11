@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Day/night widget theme: Theme.DeviceDefault.DayNight only exists from Android 10 (API 29) -->
+    <style name="Theme.Widget.vivimusic" parent="@android:style/Theme.DeviceDefault.DayNight">
+        <item name="android:colorBackground">#E6E1E5</item>
+    </style>
+</resources>

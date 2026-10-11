@@ -63,7 +63,7 @@ class InternalDatabaseTest {
         assertNotNull(dao)
         assertNotNull(db.speedDialDao)
         val version = db.openHelper.readableDatabase.version
-        assertEquals(34, version)
+        assertEquals(35, version)
     }
 
     @Test

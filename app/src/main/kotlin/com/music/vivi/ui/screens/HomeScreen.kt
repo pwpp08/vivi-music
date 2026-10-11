@@ -1709,11 +1709,12 @@ fun HomeScreen(
                                         ) { index, originalSong ->
                                             val song by database.song(originalSong.id)
                                                 .collectAsState(initial = originalSong)
+                                            val currentSong = song ?: originalSong
 
                                             SongListItem(
-                                                song = song!!,
+                                                song = currentSong,
                                                 showInLibraryIcon = true,
-                                                isActive = song!!.id == mediaMetadata?.id,
+                                                isActive = currentSong.id == mediaMetadata?.id,
                                                 isPlaying = isPlaying,
                                                 isSwipeable = false,
                                                 shape = listItemShape(index = index % rows, count = rows),
@@ -1723,7 +1724,7 @@ fun HomeScreen(
                                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                             menuState.show {
                                                                 SongMenu(
-                                                                    originalSong = song!!,
+                                                                    originalSong = currentSong,
                                                                     navController = navController,
                                                                     onDismiss = menuState::dismiss
                                                                 )
@@ -1740,12 +1741,12 @@ fun HomeScreen(
                                                     .width(horizontalLazyGridItemWidth)
                                                     .combinedClickable(
                                                         onClick = {
-                                                            if (song!!.id == mediaMetadata?.id) {
+                                                            if (currentSong.id == mediaMetadata?.id) {
                                                                 playerConnection.togglePlayPause()
                                                             } else {
                                                                 playerConnection.playQueue(
                                                                     YouTubeQueue.radio(
-                                                                        song!!.toMediaMetadata()
+                                                                        currentSong.toMediaMetadata()
                                                                     )
                                                                 )
                                                             }
@@ -1754,7 +1755,7 @@ fun HomeScreen(
                                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                             menuState.show {
                                                                 SongMenu(
-                                                                    originalSong = song!!,
+                                                                    originalSong = currentSong,
                                                                     navController = navController,
                                                                     onDismiss = menuState::dismiss
                                                                 )
@@ -1795,7 +1796,7 @@ fun HomeScreen(
                                         onClick = {
                                             val title = recommendation.title
                                             when (title) {
-                                                is Song -> navController.navigate("album/${title.album!!.id}")
+                                                is Song -> title.album?.let { navController.navigate("album/${it.id}") }
                                                 is Album -> navController.navigate("album/${title.id}")
                                                 is Artist -> navController.navigate("artist/${title.id}")
                                                 is Playlist -> {}

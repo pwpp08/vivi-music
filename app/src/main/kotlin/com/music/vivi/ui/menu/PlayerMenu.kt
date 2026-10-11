@@ -776,7 +776,8 @@ fun PlayerMenu(
 fun TempoPitchDialog(onDismiss: () -> Unit) {
     val playerConnection = LocalPlayerConnection.current ?: return
     var tempo by remember {
-        mutableFloatStateOf(playerConnection.player.playbackParameters.speed)
+        val speed = playerConnection.player.playbackParameters.speed
+        mutableFloatStateOf(round(speed * 20) / 20f)
     }
     var transposeValue by remember {
         mutableIntStateOf(round(12 * log2(playerConnection.player.playbackParameters.pitch)).toInt())
@@ -851,6 +852,8 @@ fun <T> ValueAdjuster(
     valueText: (T) -> String,
     modifier: Modifier = Modifier,
 ) {
+    val currentIndex = values.indexOf(currentValue)
+
     Row(
         horizontalArrangement = Arrangement.spacedBy(24.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -863,9 +866,11 @@ fun <T> ValueAdjuster(
         )
 
         IconButton(
-            enabled = currentValue != values.first(),
+            enabled = currentIndex > 0,
             onClick = {
-                onValueUpdate(values[values.indexOf(currentValue) - 1])
+                if (currentIndex > 0) {
+                    onValueUpdate(values[currentIndex - 1])
+                }
             },
         ) {
             Icon(
@@ -882,9 +887,11 @@ fun <T> ValueAdjuster(
         )
 
         IconButton(
-            enabled = currentValue != values.last(),
+            enabled = currentIndex != -1 && currentIndex < values.lastIndex,
             onClick = {
-                onValueUpdate(values[values.indexOf(currentValue) + 1])
+                if (currentIndex in 0 until values.lastIndex) {
+                    onValueUpdate(values[currentIndex + 1])
+                }
             },
         ) {
             Icon(

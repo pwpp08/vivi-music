@@ -286,7 +286,7 @@ fun AddToPlaylistDialogOnline(
                                                 songsIdx += 1
                                             }
 
-                                        if (songsIdx.toInt() == songsTot.toInt() - 1) {
+                                        if (songsIdx.toInt() >= songsTot.toInt()) {
                                             onProgressStart(false)
                                         }
                                         onPercentageChange(((songsIdx / songsTot) * 100).toInt())
@@ -355,7 +355,7 @@ fun AddToPlaylistDialogOnline(
                                                 songsIdx += 1
                                             }
 
-                                        if (songsIdx.toInt() == songsTot.toInt() - 1) {
+                                        if (songsIdx.toInt() >= songsTot.toInt()) {
                                             onProgressStart(false)
                                         }
                                         onPercentageChange(((songsIdx / songsTot) * 100).toInt())

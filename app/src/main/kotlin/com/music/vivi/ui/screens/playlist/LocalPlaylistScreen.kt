@@ -374,7 +374,7 @@ fun LocalPlaylistScreen(
                 Text(
                     text = stringResource(
                         R.string.remove_download_playlist_confirm,
-                        playlist?.playlist!!.name
+                        playlist?.playlist?.name.orEmpty()
                     ),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(horizontal = 18.dp),
@@ -430,7 +430,7 @@ fun LocalPlaylistScreen(
                 Text(
                     text = stringResource(
                         R.string.delete_playlist_confirm,
-                        playlist?.playlist!!.name
+                        playlist?.playlist?.name.orEmpty()
                     ),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(horizontal = 18.dp)
@@ -772,7 +772,7 @@ fun LocalPlaylistScreen(
                                                 ListQueue(
                                                     title = playlist!!.playlist.name,
                                                     items = songs.map { it.song.toMediaItem() },
-                                                    startIndex = songs.indexOfFirst { it.map.id == song.map.id },
+                                                    startIndex = songs.indexOfFirst { it.map.id == song.map.id }.coerceAtLeast(0),
                                                     playlistId = playlist!!.id,
                                                 ),
                                             )
@@ -1460,9 +1460,7 @@ fun LocalPlaylistHeader(
                             onScanDuplicates = onScanDuplicates,
                             onSync = {
                                 scope.launch(Dispatchers.IO) {
-                                    if (playlist.id.startsWith("SPOTIFY_")) {
-                                        syncUtils.syncSpotifyPlaylistSuspend(playlist.id)
-                                    } else if (playlist.playlist.browseId != null) {
+                                    if (playlist.playlist.browseId != null) {
                                         val playlistPage = YouTube.playlist(playlist.playlist.browseId!!)
                                             .completed()
                                             .getOrNull() ?: return@launch
@@ -1488,17 +1486,6 @@ fun LocalPlaylistHeader(
                                 }
                             },
                             onDelete = onshowDeletePlaylistDialog,
-                            onSyncToSpotify = {
-                                scope.launch {
-                                    if (playlist.id.startsWith("SPOTIFY_PLAYLIST_") || playlist.id == "SPOTIFY_LIKED_SONGS") {
-                                        android.widget.Toast.makeText(context, "Syncing with Spotify...", android.widget.Toast.LENGTH_SHORT).show()
-                                        syncUtils.syncSpotifyPlaylistSuspend(playlist.id)
-                                        snackbarHostState.showSnackbar(context.getString(R.string.playlist_synced))
-                                    } else {
-                                        syncUtils.syncLocalPlaylistToSpotify(playlist.id)
-                                    }
-                                }
-                            },
                             onDownload = {
                                 when (downloadState) {
                                     Download.STATE_COMPLETED -> onShowRemoveDownloadDialog()

@@ -625,43 +625,6 @@ fun PlaylistMenu(
                             )
                         )
                     }
-                    if (playlist.id.startsWith("SPOTIFY_")) {
-                        add(
-                            Material3MenuItemData(
-                                title = { Text(text = stringResource(R.string.action_sync)) },
-                                description = { Text(text = stringResource(R.string.sync_playlist_spotify_desc)) },
-                                icon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.sync),
-                                        contentDescription = null,
-                                    )
-                                },
-                                onClick = {
-                                    syncUtils.syncSpotifyPlaylist(playlist.id)
-                                    onDismiss()
-                                }
-                            )
-                        )
-                    } else if (autoPlaylist != true && !isGuest) {
-                        add(
-                            Material3MenuItemData(
-                                title = { Text(text = stringResource(R.string.sync_to_spotify)) },
-                                description = { Text(text = stringResource(R.string.sync_to_spotify_desc)) },
-                                icon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.spotify),
-                                        contentDescription = null,
-                                    )
-                                },
-                                onClick = {
-                                    onDismiss()
-                                    coroutineScope.launch {
-                                        syncUtils.syncLocalPlaylistToSpotify(playlist.id)
-                                    }
-                                }
-                            )
-                        )
-                    }
                     val currentBrowseId = dbPlaylist?.playlist?.browseId ?: playlist.playlist.browseId
                     if (currentBrowseId == null && isSignedIn && !isGuest) {
                         add(

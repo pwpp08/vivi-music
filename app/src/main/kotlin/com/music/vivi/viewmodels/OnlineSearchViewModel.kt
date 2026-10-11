@@ -40,9 +40,9 @@ constructor(
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     val query = try {
-        URLDecoder.decode(savedStateHandle.get<String>("query")!!, "UTF-8")
-    } catch (e: IllegalArgumentException) {
-        savedStateHandle.get<String>("query")!!
+        savedStateHandle.get<String>("query")?.let { URLDecoder.decode(it, "UTF-8") }.orEmpty()
+    } catch (e: Exception) {
+        savedStateHandle.get<String>("query").orEmpty()
     }
     val filter = MutableStateFlow<YouTube.SearchFilter?>(null)
     var summaryPage by mutableStateOf<SearchSummaryPage?>(null)

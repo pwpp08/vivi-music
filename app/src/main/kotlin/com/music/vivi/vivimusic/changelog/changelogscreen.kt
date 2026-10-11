@@ -228,16 +228,18 @@ fun ChangelogScreen(
 
                 for (i in 0 until array.length()) {
                     val obj = array.getJSONObject(i)
-                    val tagName = obj.getString("tag_name")
+                    if (obj.optBoolean("draft", false)) continue
+                    val tagName = obj.optString("tag_name", "")
                     if (!tagName.startsWith("v", ignoreCase = true)) continue
 
                     val name = obj.optString("name", tagName)
-                    val publishedAt = obj.getString("published_at")
+                    val publishedAt = obj.optString("published_at", "")
+                    if (publishedAt.isBlank()) continue
                     val formattedDate = try {
                         ZonedDateTime.parse(publishedAt).format(outputFormatter)
                     } catch (e: Exception) { publishedAt }
 
-                    val assets = obj.getJSONArray("assets")
+                    val assets = obj.optJSONArray("assets") ?: continue
                     var changelogUrl: String? = null
                     for (j in 0 until assets.length()) {
                         val asset = assets.getJSONObject(j)

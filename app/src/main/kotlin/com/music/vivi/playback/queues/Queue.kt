@@ -26,21 +26,36 @@ interface Queue {
     ) {
         fun filterExplicit(enabled: Boolean = true) =
             if (enabled) {
-                copy(
-                    items = items.filterExplicit(),
-                )
+                withItemsFiltered { it.metadata?.explicit != true }
             } else {
                 this
             }
 
         fun filterVideoSongs(disableVideos: Boolean = false) =
             if (disableVideos) {
-                copy(
-                    items = items.filterVideoSongs(true),
-                )
+                withItemsFiltered { it.metadata?.isVideoSong != true }
             } else {
                 this
             }
+
+        /**
+         * Drops the items rejected by [keep] and moves [mediaItemIndex] along with the list, so it still points at the
+         * song the user picked (or the next kept one when that song itself was removed) instead of at a shifted item
+         * or past the end of the shortened list.
+         */
+        private fun withItemsFiltered(keep: (MediaItem) -> Boolean): Status {
+            val kept = items.filter(keep)
+            if (kept.size == items.size) return this
+
+            val startIndex = mediaItemIndex.coerceAtLeast(0)
+            val removedBeforeStart = items.take(startIndex).count { !keep(it) }
+            val startItemRemoved = items.getOrNull(startIndex)?.let { !keep(it) } == true
+            return copy(
+                items = kept,
+                mediaItemIndex = (startIndex - removedBeforeStart).coerceIn(0, (kept.size - 1).coerceAtLeast(0)),
+                position = if (startItemRemoved) 0L else position,
+            )
+        }
     }
 }
 

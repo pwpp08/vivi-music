@@ -32,13 +32,14 @@ import com.music.vivi.LocalDatabase
 import com.music.vivi.LocalSyncUtils
 import com.music.vivi.R
 import com.music.vivi.constants.InnerTubeCookieKey
-import com.music.vivi.constants.SpotifySessionKey
 import com.music.vivi.constants.YtmSyncKey
 import com.music.vivi.db.entities.PlaylistEntity
 import com.music.vivi.extensions.isSyncEnabled
 import com.music.vivi.utils.dataStore
+import com.music.vivi.utils.reportException
 import com.music.vivi.utils.rememberPreference
 import androidx.datastore.preferences.core.edit
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -62,13 +63,9 @@ fun CreatePlaylistDialog(
     val syncUtils = LocalSyncUtils.current
     val coroutineScope = rememberCoroutineScope()
     var syncedPlaylist by remember { mutableStateOf(false) }
-    var syncedSpotify by remember { mutableStateOf(false) }
     val context = LocalContext.current
-
     val innerTubeCookie by rememberPreference(InnerTubeCookieKey, "")
     val isSignedIn = innerTubeCookie.isNotEmpty()
-    val (spotifySession) = rememberPreference(SpotifySessionKey, "")
-    val isSpotifySignedIn = spotifySession.isNotEmpty()
 
     TextFieldDialog(
         icon = { Icon(painter = painterResource(R.drawable.add), contentDescription = null) },
@@ -79,7 +76,22 @@ fun CreatePlaylistDialog(
         onDone = { playlistName ->
             coroutineScope.launch(Dispatchers.IO) {
                 val browseId = if (syncedPlaylist && isSignedIn) {
-                    YouTube.createPlaylist(playlistName)
+                    // YouTube.createPlaylist throws on network/server errors; don't crash the app
+                    try {
+                        YouTube.createPlaylist(playlistName)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        reportException(e)
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                context,
+                                e.message ?: context.getString(R.string.error_unknown),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        return@launch
+                    }
                 } else if (syncedPlaylist) {
                     Logger.getLogger("CreatePlaylistDialog").warning("Not signed in")
                     return@launch
@@ -94,10 +106,6 @@ fun CreatePlaylistDialog(
                 
                 database.query {
                     insert(playlistEntity)
-                }
-
-                if (syncedSpotify && isSpotifySignedIn) {
-                    syncUtils.createLinkedSpotifyPlaylist(playlistEntity.id, playlistName)
                 }
 
                 withContext(Dispatchers.Main) {
@@ -150,43 +158,6 @@ fun CreatePlaylistDialog(
                                         }
                                     }
                                     syncedPlaylist = !syncedPlaylist
-                                }
-                            }
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(R.string.sync_to_spotify),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            Spacer(Modifier.height(2.dp))
-                            Text(
-                                text = stringResource(R.string.sync_to_spotify_desc),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        Spacer(Modifier.width(16.dp))
-                        Switch(
-                            checked = syncedSpotify,
-                            onCheckedChange = {
-                                if (!isSpotifySignedIn && !syncedSpotify) {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.spotify_not_connected),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                } else {
-                                    syncedSpotify = !syncedSpotify
                                 }
                             }
                         )

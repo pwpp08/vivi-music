@@ -498,7 +498,7 @@ object Musixmatch {
         return noSpecialChars.replace(Regex("\\(.*?\\)"), "")
             .replace(Regex("\\[.*?\\]"), "")
             .lowercase(Locale.US)
-            .replace(Regex("[^a-z0-9 ]"), "")
+            .replace(Regex("[^\\p{L}\\p{M}\\p{N} ]"), "") // all scripts: a-z0-9 made every non-Latin title "" and so a perfect match
             .replace(Regex("\\s+"), " ")
             .trim()
     }

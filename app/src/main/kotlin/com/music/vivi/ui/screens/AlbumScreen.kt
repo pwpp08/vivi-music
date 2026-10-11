@@ -790,7 +790,11 @@ fun AlbumScreen(
                                         } else {
                                             playerConnection.service.getAutomix(playlistId)
                                             playerConnection.playQueue(
-                                                LocalAlbumRadio(albumWithSongs, startIndex = index),
+                                                LocalAlbumRadio(
+                                                    albumWithSongs,
+                                                    // The queue holds the whole album, `index` counts the visible (filtered) songs.
+                                                    startIndex = albumWithSongs.songs.indexOfFirst { it.id == song.id }.coerceAtLeast(0),
+                                                ),
                                             )
                                         }
                                     },
@@ -847,7 +851,11 @@ fun AlbumScreen(
                                         } else {
                                             playerConnection.service.getAutomix(playlistId)
                                             playerConnection.playQueue(
-                                                LocalAlbumRadio(albumWithSongs, startIndex = index),
+                                                LocalAlbumRadio(
+                                                    albumWithSongs,
+                                                    // The queue holds the whole album, `index` counts the visible (filtered) songs.
+                                                    startIndex = albumWithSongs.songs.indexOfFirst { it.id == song.id }.coerceAtLeast(0),
+                                                ),
                                             )
                                         }
                                     },

@@ -10,7 +10,7 @@ object SpotifyMapper {
     private val BRACKET_PATTERN = Regex("\\[.*?]")
     private val REMASTER_PATTERN = Regex("\\(.*?remaster.*?\\)", RegexOption.IGNORE_CASE)
     private val REMIX_PATTERN = Regex("\\(.*?remix.*?\\)", RegexOption.IGNORE_CASE)
-    private val NON_ALNUM_PATTERN = Regex("[^a-z0-9\\s]")
+    private val NON_ALNUM_PATTERN = Regex("[^\\p{L}\\p{M}\\p{N}\\s]") // all scripts; a-z0-9 would blank out non-Latin titles
     private val MULTI_SPACE_PATTERN = Regex("\\s+")
 
     private const val NORM_CACHE_MAX_SIZE = 256

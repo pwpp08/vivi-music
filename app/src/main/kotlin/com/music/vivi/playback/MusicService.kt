@@ -461,17 +461,18 @@ class MusicService :
         try {
             if (player.mediaItemCount > 0) {
                 val currentIndex = player.currentMediaItemIndex
+                val safeIndex = if (currentIndex in 0 until player.mediaItemCount) currentIndex else 0
                 val currentPos = player.currentPosition
-                if (dual.mediaItemCount != player.mediaItemCount || dual.currentMediaItemIndex != currentIndex) {
+                if (dual.mediaItemCount != player.mediaItemCount || dual.currentMediaItemIndex != safeIndex) {
                     dual.clearMediaItems()
                     for (i in 0 until player.mediaItemCount) {
                         dual.addMediaItem(player.getMediaItemAt(i))
                     }
-                    dual.seekTo(currentIndex, currentPos)
+                    dual.seekTo(safeIndex, currentPos)
                     dual.prepare()
                 } else {
                     if (kotlin.math.abs(dual.currentPosition - currentPos) > 300) {
-                        dual.seekTo(currentIndex, currentPos)
+                        dual.seekTo(safeIndex, currentPos)
                     }
                 }
                 dual.playWhenReady = player.playWhenReady
@@ -1480,7 +1481,7 @@ class MusicService :
                                 REPEAT_MODE_OFF -> R.string.repeat_mode_off
                                 REPEAT_MODE_ONE -> R.string.repeat_mode_one
                                 REPEAT_MODE_ALL -> R.string.repeat_mode_all
-                                else -> throw IllegalStateException()
+                                else -> R.string.repeat_mode_off
                             },
                         ),
                     ).setIconResId(
@@ -1488,7 +1489,7 @@ class MusicService :
                             REPEAT_MODE_OFF -> R.drawable.repeat
                             REPEAT_MODE_ONE -> R.drawable.repeat_one_on
                             REPEAT_MODE_ALL -> R.drawable.repeat_on
-                            else -> throw IllegalStateException()
+                            else -> R.drawable.repeat
                         },
                     ).setSessionCommand(CommandToggleRepeatMode)
                     .build(),
@@ -1811,7 +1812,9 @@ class MusicService :
     ) {
         automixItems.value =
             automixItems.value.toMutableList().apply {
-                removeAt(position)
+                if (position in indices) {
+                    removeAt(position)
+                }
             }
         addToQueue(listOf(item))
     }
@@ -1822,7 +1825,9 @@ class MusicService :
     ) {
         automixItems.value =
             automixItems.value.toMutableList().apply {
-                removeAt(position)
+                if (position in indices) {
+                    removeAt(position)
+                }
             }
         playNext(listOf(item))
     }

@@ -275,10 +275,11 @@ fun BackupAndRestore(
                         )
                         importedSongs.clear()
                         importedSongs.addAll(result)
+                        // The progress dialog cannot be dismissed by the user, so it has to go away whatever the result.
+                        showCsvImportProgress = false
+                        csvImportProgress = 0
+                        csvRecentLogs.clear()
                         if (result.isNotEmpty()) {
-                            showCsvImportProgress = false
-                            csvImportProgress = 0
-                            csvRecentLogs.clear()
                             showChoosePlaylistDialogOnline = true
                         }
                     }

@@ -28,6 +28,7 @@ class MusixmatchTest {
                     WordEntry("is", 0.436),
                     WordEntry(" ", 0.559),
                     WordEntry("the", 0.627),
+                    WordEntry(" ", 1.0),
                     WordEntry("end", 1.287)
                 ),
                 x = "This is the end"
@@ -59,6 +60,21 @@ class MusixmatchTest {
         // Should preserve space for each word separated by comma or ampersand
         val expected = "taylor swift ed sheeran someone else"
         assertEquals(expected, cleaned)
+    }
+
+    @Test
+    fun testCleanTextNonLatin() {
+        val cyrillic = "Группа крови (Remastered) [1988]"
+        assertEquals("группа крови", Musixmatch.cleanText(cyrillic))
+
+        val japanese = "夜に駆ける (feat. Ayase)"
+        assertEquals("夜に駆ける", Musixmatch.cleanText(japanese))
+
+        val korean = "봄날 [Spring Day]"
+        assertEquals("봄날", Musixmatch.cleanText(korean))
+
+        val persian = "گل سنگم"
+        assertEquals("گل سنگم", Musixmatch.cleanText(persian))
     }
 
     @Test

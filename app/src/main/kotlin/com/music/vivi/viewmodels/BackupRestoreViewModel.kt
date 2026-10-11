@@ -8,6 +8,8 @@ package com.music.vivi.viewmodels
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import com.music.vivi.MainActivity
@@ -246,21 +248,23 @@ class BackupRestoreViewModel @Inject constructor(
         }.onFailure {
             reportException(it)
             Timber.tag("CSV_IMPORT").e(it, "CSV import failed")
-            Toast.makeText(
-                context,
-                "Failed to import CSV file",
-                Toast.LENGTH_SHORT
-            ).show()
+            showToastOnMainThread(context, "Failed to import CSV file")
         }
 
         if (songs.isEmpty()) {
-            Toast.makeText(
+            showToastOnMainThread(
                 context,
                 "No songs found. Invalid file, or perhaps no song matches were found.",
-                Toast.LENGTH_SHORT
-            ).show()
+            )
         }
         return songs
+    }
+
+    // The CSV import runs on a background dispatcher, where a Toast has no Looper to attach to and would crash.
+    private fun showToastOnMainThread(context: Context, message: String) {
+        Handler(Looper.getMainLooper()).post {
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
     }
 
     fun importPlaylistFromCsv(context: Context, uri: Uri): ArrayList<Song> {

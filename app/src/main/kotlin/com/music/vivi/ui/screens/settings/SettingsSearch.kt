@@ -62,6 +62,9 @@ fun levenshteinDistance(s1: String, s2: String, maxLimit: Int = 2): Int {
     return dp[n]
 }
 
+// Letters/marks/digits of any script: an ASCII-only class turned every non-Latin (localized) query or title into no words.
+private val WORD_SEPARATOR_REGEX = Regex("[^\\p{L}\\p{M}\\p{N}]+")
+
 /**
  * Performs typo-tolerant fuzzy and substring search across settings titles, descriptions,
  * keywords, and categories.
@@ -70,7 +73,7 @@ fun searchSettings(query: String, allEntries: List<SettingSearchEntry>): List<Se
     val trimmed = query.trim().lowercase()
     if (trimmed.isEmpty()) return emptyList()
 
-    val tokens = trimmed.split(Regex("[^a-zA-Z0-9]+")).filter { it.isNotBlank() }
+    val tokens = trimmed.split(WORD_SEPARATOR_REGEX).filter { it.isNotBlank() }
     if (tokens.isEmpty()) return emptyList()
 
     return allEntries.mapNotNull { entry ->
@@ -79,9 +82,9 @@ fun searchSettings(query: String, allEntries: List<SettingSearchEntry>): List<Se
         val catLower = entry.category.lowercase()
         val keywordsLower = entry.keywords.map { it.lowercase() }
 
-        val titleWords = titleLower.split(Regex("[^a-zA-Z0-9]+")).filter { it.isNotBlank() }
-        val descWords = descLower.split(Regex("[^a-zA-Z0-9]+")).filter { it.isNotBlank() }
-        val keywordWords = keywordsLower.flatMap { it.split(Regex("[^a-zA-Z0-9]+")) }.filter { it.isNotBlank() }
+        val titleWords = titleLower.split(WORD_SEPARATOR_REGEX).filter { it.isNotBlank() }
+        val descWords = descLower.split(WORD_SEPARATOR_REGEX).filter { it.isNotBlank() }
+        val keywordWords = keywordsLower.flatMap { it.split(WORD_SEPARATOR_REGEX) }.filter { it.isNotBlank() }
 
         var score = 0
         var allTokensMatch = true
@@ -221,15 +224,6 @@ private fun buildSettingSearchIndex(context: Context): List<SettingSearchEntry> 
             iconRes = R.drawable.commit
         ),
         SettingSearchEntry(
-            title = "Beta & nightly updates",
-            description = "Receive cutting-edge beta and nightly workflow updates",
-            category = "Updates",
-            route = "settings/update",
-            settingKey = "beta_nightly",
-            keywords = listOf("beta", "nightly", "bleeding edge", "testing", "experimental", "channel"),
-            iconRes = R.drawable.network_update
-        ),
-        SettingSearchEntry(
             title = "Automatic update check",
             description = "Periodically check for new versions on startup in the background",
             category = "Updates",
@@ -295,12 +289,12 @@ private fun buildSettingSearchIndex(context: Context): List<SettingSearchEntry> 
             iconRes = R.drawable.group
         ),
         SettingSearchEntry(
-            title = "Spotify playlist sync",
-            description = "Import and export playlists between Vivi Music and Spotify",
-            category = "Integrations",
+            title = "Import from Spotify",
+            description = "Import playlists from a Spotify link",
+            category = "Backup & restore",
             route = "settings/spotify",
-            settingKey = "spotify_sync",
-            keywords = listOf("spotify", "import", "playlists", "sync", "transfer", "export", "playlist sync", "spotify sync", "library"),
+            settingKey = "spotify_import",
+            keywords = listOf("spotify", "import", "link", "playlist link"),
             iconRes = R.drawable.spotify
         ),
 

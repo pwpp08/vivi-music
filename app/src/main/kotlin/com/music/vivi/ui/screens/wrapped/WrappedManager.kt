@@ -111,7 +111,7 @@ class WrappedManager(
             val playlistMap = mutableMapOf<WrappedScreenType, String>()
 
             // Intro Part: Random song from top 6-30
-            val introSongPool = topSongs.subList(5, topSongs.size)
+            val introSongPool = topSongs.drop(5).take(25)
             val introSong = introSongPool.randomOrNull()?.id ?: topSongs.last().id
             playlistMap[WrappedScreenType.Welcome] = introSong
             playlistMap[WrappedScreenType.MinutesTease] = introSong

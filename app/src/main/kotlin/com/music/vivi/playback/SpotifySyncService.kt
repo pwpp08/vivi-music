@@ -26,7 +26,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -68,7 +67,7 @@ class SpotifySyncService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                getString(R.string.spotify_sync),
+                getString(R.string.spotify_import_in_progress),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
                 description = getString(R.string.spotify_sync_desc)
@@ -80,8 +79,8 @@ class SpotifySyncService : Service() {
 
     private fun startForegroundWithInitialNotification() {
         val notification = buildNotification(
-            title = getString(R.string.spotify_sync),
-            content = getString(R.string.push_in_progress),
+            title = getString(R.string.spotify_import_in_progress),
+            content = getString(R.string.spotify_import_in_progress),
             progress = 0,
             indeterminate = true,
             isFinished = false
@@ -101,74 +100,35 @@ class SpotifySyncService : Service() {
     private fun observeProgress() {
         observerJob?.cancel()
         observerJob = serviceScope.launch {
-            combine(
-                SpotifyImportViewModel.importProgressFlow,
-                SpotifyImportViewModel.pushProgressFlow
-            ) { importProg, pushProg ->
-                Pair(importProg, pushProg)
-            }.collect { (importProg, pushProg) ->
-                val activeImport = importProg != null
-                val activePush = pushProg != null
-
-                if (!activeImport && !activePush) {
-                    // Both idle or dismissed
+            SpotifyImportViewModel.importProgressFlow.collect { importProg ->
+                if (importProg == null) {
                     stopForegroundService()
                     return@collect
                 }
 
-                if (importProg != null) {
-                    val isFinished = importProg.isFinished
-                    val percentInt = (importProg.percent * 100).toInt().coerceIn(0, 100)
-                    val content = if (isFinished) {
-                        getString(R.string.spotify_import_finished)
-                    } else if (importProg.playlistName.isNotBlank()) {
-                        "${importProg.playlistName} (${importProg.currentSongIndex}/${importProg.totalSongs})"
-                    } else {
-                        getString(R.string.spotify_import_in_progress)
-                    }
+                val isFinished = importProg.isFinished
+                val percentInt = (importProg.percent * 100).toInt().coerceIn(0, 100)
+                val content = if (isFinished) {
+                    getString(R.string.spotify_import_finished)
+                } else if (importProg.playlistName.isNotBlank()) {
+                    "${importProg.playlistName} (${importProg.currentSongIndex}/${importProg.totalSongs})"
+                } else {
+                    getString(R.string.spotify_import_in_progress)
+                }
 
-                    val notification = buildNotification(
-                        title = if (isFinished) getString(R.string.spotify_import_complete) else getString(R.string.spotify_import_in_progress),
-                        content = content,
-                        progress = percentInt,
-                        indeterminate = !isFinished && percentInt == 0 && importProg.totalSongs == 0,
-                        isFinished = isFinished
-                    )
-                    notificationManager.notify(NOTIFICATION_ID, notification)
+                val notification = buildNotification(
+                    title = if (isFinished) getString(R.string.spotify_import_complete) else getString(R.string.spotify_import_in_progress),
+                    content = content,
+                    progress = percentInt,
+                    indeterminate = !isFinished && percentInt == 0 && importProg.totalSongs == 0,
+                    isFinished = isFinished
+                )
+                notificationManager.notify(NOTIFICATION_ID, notification)
 
-                    if (isFinished) {
-                        delay(2500)
-                        if (SpotifyImportViewModel.importProgressFlow.value?.isFinished == true &&
-                            SpotifyImportViewModel.pushProgressFlow.value == null) {
-                            stopForegroundService()
-                        }
-                    }
-                } else if (pushProg != null) {
-                    val isFinished = pushProg.isFinished
-                    val percentInt = (pushProg.percent * 100).toInt().coerceIn(0, 100)
-                    val content = if (pushProg.status.isNotBlank()) {
-                        pushProg.status
-                    } else if (pushProg.playlistName.isNotBlank()) {
-                        pushProg.playlistName
-                    } else {
-                        getString(R.string.push_to_spotify)
-                    }
-
-                    val notification = buildNotification(
-                        title = getString(R.string.push_to_spotify),
-                        content = content,
-                        progress = percentInt,
-                        indeterminate = !isFinished && percentInt == 0,
-                        isFinished = isFinished
-                    )
-                    notificationManager.notify(NOTIFICATION_ID, notification)
-
-                    if (isFinished) {
-                        delay(2500)
-                        if (SpotifyImportViewModel.pushProgressFlow.value?.isFinished == true &&
-                            SpotifyImportViewModel.importProgressFlow.value == null) {
-                            stopForegroundService()
-                        }
+                if (isFinished) {
+                    delay(2500)
+                    if (SpotifyImportViewModel.importProgressFlow.value?.isFinished == true) {
+                        stopForegroundService()
                     }
                 }
             }

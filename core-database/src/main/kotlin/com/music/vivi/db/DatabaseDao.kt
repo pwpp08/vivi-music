@@ -866,22 +866,22 @@ interface DatabaseDao {
 
     @Transaction
     @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
-    @Query("SELECT * FROM album WHERE bookmarkedAt IS NOT NULL ORDER BY title")
+    @Query("SELECT * FROM album WHERE isUploaded = 1 ORDER BY title")
     fun albumsUploadedByNameAsc(): Flow<List<Album>>
 
     @Transaction
     @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
-    @Query("SELECT * FROM album WHERE bookmarkedAt IS NOT NULL ORDER BY year")
+    @Query("SELECT * FROM album WHERE isUploaded = 1 ORDER BY year")
     fun albumsUploadedByYearAsc(): Flow<List<Album>>
 
     @Transaction
     @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
-    @Query("SELECT * FROM album WHERE bookmarkedAt IS NOT NULL ORDER BY songCount")
+    @Query("SELECT * FROM album WHERE isUploaded = 1 ORDER BY songCount")
     fun albumsUploadedBySongCountAsc(): Flow<List<Album>>
 
     @Transaction
     @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
-    @Query("SELECT * FROM album WHERE bookmarkedAt IS NOT NULL ORDER BY duration")
+    @Query("SELECT * FROM album WHERE isUploaded = 1 ORDER BY duration")
     fun albumsUploadedByLengthAsc(): Flow<List<Album>>
 
     @Transaction
@@ -892,7 +892,7 @@ interface DatabaseDao {
         FROM album
                  JOIN song
                       ON song.albumId = album.id
-        WHERE bookmarkedAt IS NOT NULL
+        WHERE album.isUploaded = 1
         GROUP BY album.id
         ORDER BY SUM(song.totalPlayTime)
     """
@@ -1651,7 +1651,7 @@ interface DatabaseDao {
         from: Int,
     ): List<PlaylistSongMap>
 
-    @Query("UPDATE playlist SET bookmarkedAt = datetime('now') WHERE bookmarkedAt IS NULL AND id IN (SELECT DISTINCT playlistId FROM playlist_song_map)")
+    @Query("UPDATE playlist SET bookmarkedAt = CAST(strftime('%s', 'now') AS INTEGER) * 1000 WHERE bookmarkedAt IS NULL AND id IN (SELECT DISTINCT playlistId FROM playlist_song_map)")
     suspend fun restoreOrphanPlaylists(): Int
 
     @Query("""
@@ -1669,13 +1669,13 @@ interface DatabaseDao {
     """)
     suspend fun cleanupGhostPlaylists(): Int
 
-    @Query("UPDATE album SET bookmarkedAt = datetime('now') WHERE bookmarkedAt IS NULL AND id IN (SELECT DISTINCT albumId FROM song_album_map)")
+    @Query("UPDATE album SET bookmarkedAt = CAST(strftime('%s', 'now') AS INTEGER) * 1000 WHERE bookmarkedAt IS NULL AND id IN (SELECT DISTINCT albumId FROM song_album_map)")
     suspend fun restoreOrphanAlbums(): Int
 
-    @Query("UPDATE artist SET bookmarkedAt = datetime('now') WHERE bookmarkedAt IS NULL AND id IN (SELECT DISTINCT artistId FROM song_artist_map)")
+    @Query("UPDATE artist SET bookmarkedAt = CAST(strftime('%s', 'now') AS INTEGER) * 1000 WHERE bookmarkedAt IS NULL AND id IN (SELECT DISTINCT artistId FROM song_artist_map)")
     suspend fun restoreOrphanArtists(): Int
 
-    @Query("UPDATE song SET liked = 1, inLibrary = datetime('now') WHERE liked = 0 AND (isDownloaded = 1 OR id IN (SELECT DISTINCT songId FROM playlist_song_map))")
+    @Query("UPDATE song SET liked = 1, inLibrary = CAST(strftime('%s', 'now') AS INTEGER) * 1000 WHERE liked = 0 AND (isDownloaded = 1 OR id IN (SELECT DISTINCT songId FROM playlist_song_map))")
     suspend fun restoreOrphanSongs(): Int
 
     @Transaction

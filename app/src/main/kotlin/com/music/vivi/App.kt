@@ -103,6 +103,12 @@ class App : Application(), SingletonImageLoader.Factory {
             initializeSettings()
             observeSettingsChanges()
         }
+
+        // Prewarm stream extractor, PoToken WebView, and cipher deobfuscator in background
+        applicationScope.launch(Dispatchers.IO) {
+            runCatching { InnerTubeXPlayer.prewarm() }
+            runCatching { CipherDeobfuscator.prewarm() }
+        }
     }
 
     private suspend fun initializeSettings() {
@@ -158,7 +164,7 @@ class App : Application(), SingletonImageLoader.Factory {
         }
 
         YouTube.useLoginForBrowse = settings[UseLoginForBrowse] ?: true
-        YouTube.ipVersion = settings[IpVersionKey]?.toEnum(defaultValue = IpVersion.IPV4) ?: IpVersion.IPV4
+        YouTube.ipVersion = settings[IpVersionKey]?.toEnum(defaultValue = IpVersion.AUTO) ?: IpVersion.AUTO
 
         val channel = NotificationChannel(
             "updates",
@@ -251,7 +257,7 @@ class App : Application(), SingletonImageLoader.Factory {
                 .map { it[IpVersionKey] }
                 .distinctUntilChanged()
                 .collect { ipVersion ->
-                    YouTube.ipVersion = ipVersion?.toEnum(defaultValue = IpVersion.IPV4) ?: IpVersion.IPV4
+                    YouTube.ipVersion = ipVersion?.toEnum(defaultValue = IpVersion.AUTO) ?: IpVersion.AUTO
                 }
         }
 

@@ -57,14 +57,7 @@ fun IntegrationScreen(
                         navController.navigate("settings/integrations/lastfm")
                     }
                 ),
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.spotify),
-                    title = { Text(stringResource(R.string.spotify_sync)) },
-                    description = { Text(stringResource(R.string.spotify_sync_desc)) },
-                    onClick = {
-                        navController.navigate("settings/spotify")
-                    }
-                ),
+
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.location_on),
                     title = { Text(stringResource(R.string.listen_in_maps)) },

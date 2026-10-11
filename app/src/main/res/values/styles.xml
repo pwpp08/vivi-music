@@ -12,8 +12,8 @@
         <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 
-    <!-- Widget Theme with Material 3 colors fallback for API < 31 -->
-    <style name="Theme.Widget.vivimusic" parent="@android:style/Theme.DeviceDefault.DayNight">
+    <!-- Widget Theme with Material 3 colors fallback for API < 31 (API 29+ uses the DayNight parent, see values-v29) -->
+    <style name="Theme.Widget.vivimusic" parent="@android:style/Theme.DeviceDefault">
         <item name="android:colorBackground">#E6E1E5</item>
     </style>
 </resources>

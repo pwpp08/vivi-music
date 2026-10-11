@@ -1152,10 +1152,6 @@ fun AddSongsToPlaylistDialog(
                             songIds.forEach { syncUtils.clearSongTombstone(playlist.id, it) }
                             downloadUtil.autoDownloadIfPlaylistDownloaded(playlist.id, songIds)
 
-                            scope.launch {
-                                syncUtils.syncLocalPlaylistToSpotify(playlist.id, isAutoSync = true)
-                            }
-
                             playlist.playlist.browseId?.let { browseId ->
                                 songIds.forEach { songId ->
                                     YouTube.addToPlaylist(browseId, songId)

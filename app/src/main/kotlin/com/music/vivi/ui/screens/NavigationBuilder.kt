@@ -70,7 +70,6 @@ import com.music.vivi.ui.screens.settings.integrations.GoogleMapsSettings
 import com.music.vivi.ui.screens.recognition.RecognitionScreen
 import com.music.vivi.ui.screens.recognition.RecognitionHistoryScreen
 import com.music.vivi.ui.screens.settings.UpdateSettings
-import com.music.vivi.ui.screens.settings.UpstreamUpdatesScreen
 import com.music.vivi.ui.screens.settings.NotificationPermission
 import com.music.vivi.ui.screens.wrapped.WrappedScreen
 import com.music.vivi.vivimusic.updater.UpdateScreen
@@ -139,21 +138,6 @@ fun NavGraphBuilder.navigationBuilder(
 
     composable("account") {
         AccountScreen(navController, scrollBehavior)
-    }
-
-    composable("spotify_account") {
-        SpotifyAccountScreen(navController, scrollBehavior)
-    }
-
-    composable(
-        route = "spotify_playlist/{playlistId}",
-        arguments = listOf(
-            navArgument("playlistId") {
-                type = NavType.StringType
-            }
-        )
-    ) {
-        SpotifyPlaylistDetailScreen(navController, scrollBehavior)
     }
 
     composable("new_release") {
@@ -369,10 +353,6 @@ fun NavGraphBuilder.navigationBuilder(
 
     composable("settings/update/notification_permission") {
         NotificationPermission(navController, scrollBehavior)
-    }
-
-    composable("settings/update/upstream") {
-        UpstreamUpdatesScreen(navController, scrollBehavior)
     }
 
     composable("settings/account") {

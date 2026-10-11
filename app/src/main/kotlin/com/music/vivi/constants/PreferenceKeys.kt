@@ -243,11 +243,6 @@ val ListenTogetherSessionTimestampKey = longPreferencesKey("listenTogetherSessio
 
 val LastFMSessionKey = stringPreferencesKey("lastfmSession")
 val LastFMUsernameKey = stringPreferencesKey("lastfmUsername")
-val SpotifySessionKey = stringPreferencesKey("spotifySession")
-val SpotifyPlaylistsCacheKey = stringPreferencesKey("spotifyPlaylistsCache")
-val SpotifyAutoSyncKey = booleanPreferencesKey("spotifyAutoSync")
-val SpotifyCustomClientIdKey = stringPreferencesKey("spotifyCustomClientId")
-val SpotifyCustomClientSecretKey = stringPreferencesKey("spotifyCustomClientSecret")
 val ListenInMapsKey = booleanPreferencesKey("listenInMaps")
 val AppLogoPresetKey = stringPreferencesKey("appLogoPreset")
 val CustomLogoPathKey = stringPreferencesKey("customLogoPath")

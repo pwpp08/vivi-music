@@ -333,9 +333,26 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (::navController.isInitialized) {
+            handleShortcutIntent(intent, navController)
             handleDeepLinkIntent(intent, navController)
         } else {
             pendingIntent = intent
+        }
+    }
+
+    /** Launcher shortcuts used while the app is already running (a cold start picks the tab as start destination). */
+    private fun handleShortcutIntent(intent: Intent, navController: NavHostController) {
+        val route = when (intent.action) {
+            ACTION_SEARCH -> Screens.Search.route
+            ACTION_LIBRARY -> Screens.Library.route
+            else -> return
+        }
+        navController.navigate(route) {
+            popUpTo(navController.graph.startDestinationId) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
         }
     }
 
@@ -600,8 +617,8 @@ class MainActivity : ComponentActivity() {
                 }
                 val tabOpenedFromShortcut = remember {
                     when (intent?.action) {
-                        ACTION_SEARCH -> NavigationTab.LIBRARY
-                        ACTION_LIBRARY -> NavigationTab.SEARCH
+                        ACTION_SEARCH -> NavigationTab.SEARCH
+                        ACTION_LIBRARY -> NavigationTab.LIBRARY
                         else -> null
                     }
                 }
@@ -840,6 +857,7 @@ class MainActivity : ComponentActivity() {
 
                 LaunchedEffect(Unit) {
                     if (pendingIntent != null) {
+                        handleShortcutIntent(pendingIntent!!, navController)
                         handleDeepLinkIntent(pendingIntent!!, navController)
                         pendingIntent = null
                     } else {
@@ -1187,8 +1205,8 @@ class MainActivity : ComponentActivity() {
                                     navController = navController,
                                     startDestination = when (tabOpenedFromShortcut ?: defaultOpenTab) {
                                         NavigationTab.HOME -> Screens.Home
+                                        NavigationTab.SEARCH -> Screens.Search
                                         NavigationTab.LIBRARY -> Screens.Library
-                                        else -> Screens.Home
                                     }.route,
                                     // Enter Transition - smoother with smaller offset and longer duration
                                     enterTransition = {

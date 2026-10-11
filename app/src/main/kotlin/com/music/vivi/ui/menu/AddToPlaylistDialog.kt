@@ -242,9 +242,6 @@ fun AddToPlaylistDialog(
                                 database.addSongToPlaylist(playlist, songIds!!)
                                 songIds?.forEach { syncUtils.clearSongTombstone(playlist.id, it) }
                                 downloadUtil.autoDownloadIfPlaylistDownloaded(playlist.id, songIds!!)
-                                coroutineScope.launch {
-                                    syncUtils.syncLocalPlaylistToSpotify(playlist.id, isAutoSync = true)
-                                }
 
                                 playlist.playlist.browseId?.let { plist ->
                                     songIds?.forEach {
@@ -276,19 +273,24 @@ fun AddToPlaylistDialog(
                         onClick = {
                             showDuplicateDialog = false
                             onDismiss()
-                            val toAdd = songIds!!.filter {
+                            val playlist = selectedPlaylist ?: return@TextButton
+                            val toAdd = songIds?.filter {
                                 !duplicates.contains(it)
-                            }
+                            } ?: return@TextButton
                             database.transaction {
                                 addSongToPlaylist(
-                                    selectedPlaylist!!,
+                                    playlist,
                                     toAdd
                                 )
                             }
-                            toAdd.forEach { syncUtils.clearSongTombstone(selectedPlaylist!!.id, it) }
-                            downloadUtil.autoDownloadIfPlaylistDownloaded(selectedPlaylist!!.id, toAdd)
-                            coroutineScope.launch {
-                                syncUtils.syncLocalPlaylistToSpotify(selectedPlaylist!!.id, isAutoSync = true)
+                            toAdd.forEach { syncUtils.clearSongTombstone(playlist.id, it) }
+                            downloadUtil.autoDownloadIfPlaylistDownloaded(playlist.id, toAdd)
+                            playlist.playlist.browseId?.let { plist ->
+                                coroutineScope.launch(Dispatchers.IO) {
+                                    toAdd.forEach {
+                                        YouTube.addToPlaylist(plist, it)
+                                    }
+                                }
                             }
                         }
                     ) {
@@ -299,13 +301,19 @@ fun AddToPlaylistDialog(
                         onClick = {
                             showDuplicateDialog = false
                             onDismiss()
+                            val playlist = selectedPlaylist ?: return@TextButton
+                            val toAdd = songIds ?: return@TextButton
                             database.transaction {
-                                addSongToPlaylist(selectedPlaylist!!, songIds!!)
+                                addSongToPlaylist(playlist, toAdd)
                             }
-                            songIds?.forEach { syncUtils.clearSongTombstone(selectedPlaylist!!.id, it) }
-                            downloadUtil.autoDownloadIfPlaylistDownloaded(selectedPlaylist!!.id, songIds!!)
-                            coroutineScope.launch {
-                                syncUtils.syncLocalPlaylistToSpotify(selectedPlaylist!!.id, isAutoSync = true)
+                            toAdd.forEach { syncUtils.clearSongTombstone(playlist.id, it) }
+                            downloadUtil.autoDownloadIfPlaylistDownloaded(playlist.id, toAdd)
+                            playlist.playlist.browseId?.let { plist ->
+                                coroutineScope.launch(Dispatchers.IO) {
+                                    toAdd.forEach {
+                                        YouTube.addToPlaylist(plist, it)
+                                    }
+                                }
                             }
                         }
                     ) {

@@ -340,8 +340,8 @@
     <string name="error_file_open">Datei konnte nicht geöffnet werden: %1$s</string>
     <string name="import_error_title">Importfehler</string>
     <plurals name="profiles_count">
-        <item quantity="one">Equalizer-Benutzeroberfläche</item>
-        <item quantity="other"/>
+        <item quantity="one">%d Profil</item>
+        <item quantity="other">%d Profile</item>
     </plurals>
     <string name="system_equalizer">System-Equalizer</string>
     <string name="no_song_playing">Es wird kein Song abgespielt</string>

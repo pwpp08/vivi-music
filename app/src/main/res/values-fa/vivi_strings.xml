@@ -120,8 +120,8 @@
     <string name="loading_charts">بارگذاری نمودار ها…</string>
     <string name="cached_playlist">کش شده</string>
     <string name="now_playing">در حال پخش</string>
-    <string name="seek_forward_dynamic">ثانیه به جلو</string>
-    <string name="seek_backward_dynamic">ثانیه به عقب</string>
+    <string name="seek_forward_dynamic">+%1$d ثانیه به جلو</string>
+    <string name="seek_backward_dynamic">-%1$d ثانیه به عقب</string>
     <plurals name="n_element">
         <item quantity="one">مورد</item>
         <item quantity="other">موارد</item>

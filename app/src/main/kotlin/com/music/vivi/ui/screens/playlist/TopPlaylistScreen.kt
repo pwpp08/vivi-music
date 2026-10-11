@@ -233,7 +233,7 @@ fun TopPlaylistScreen(
                 TextButton(
                     onClick = {
                         showRemoveDownloadDialog = false
-                        songs!!.forEach { song ->
+                        songs?.forEach { song ->
                             DownloadService.sendRemoveDownload(
                                 context,
                                 ExoDownloadService::class.java,
@@ -364,11 +364,12 @@ fun TopPlaylistScreen(
                                         } else if (song.song.id == mediaMetadata?.id) {
                                             playerConnection.togglePlayPause()
                                         } else {
+                                            val currentSongs = songs ?: return@combinedClickable
                                             playerConnection.playQueue(
                                                 ListQueue(
                                                     title = name,
-                                                    items = songs!!.map { it.toMediaItem() },
-                                                    startIndex = songs!!.indexOfFirst { it.id == song.id }
+                                                    items = currentSongs.map { it.toMediaItem() },
+                                                    startIndex = currentSongs.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
                                                 ),
                                             )
                                         }

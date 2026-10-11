@@ -23,6 +23,17 @@ object Spotify {
     @Volatile
     var accessToken: String? = null
 
+    suspend fun ensureToken(): String {
+        val current = accessToken
+        if (!current.isNullOrBlank()) return current
+        val anon = SpotifyAuth.fetchAnonymousToken().getOrNull()
+        if (anon != null && anon.accessToken.isNotBlank()) {
+            accessToken = anon.accessToken
+            return anon.accessToken
+        }
+        throw SpotifyException(401, "Not authenticated and unable to acquire anonymous token")
+    }
+
     @Volatile
     private var rateLimitedUntilMs: Long = 0L
 
@@ -415,7 +426,7 @@ object Spotify {
     }
 
     suspend fun playlist(playlistId: String): Result<SpotifyPlaylist> = runCatching {
-        val token = accessToken ?: throw SpotifyException(401, "Not authenticated")
+        val token = accessToken ?: ensureToken()
 
         // 1. Try official Spotify Web API first
         val webApiResult = runCatching {
@@ -522,7 +533,7 @@ object Spotify {
         limit: Int = 100,
         offset: Int = 0,
     ): Result<SpotifyPaging<SpotifyPlaylistTrack>> = runCatching {
-        val token = accessToken ?: throw SpotifyException(401, "Not authenticated")
+        val token = accessToken ?: ensureToken()
 
         // 1. Try official Spotify Web API first (fast, reliable, no GraphQL hash dependency)
         val webApiResult = runCatching {

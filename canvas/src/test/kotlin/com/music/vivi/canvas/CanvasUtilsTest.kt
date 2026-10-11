@@ -23,4 +23,29 @@ class CanvasUtilsTest {
         assertEquals(normalized1, normalized2)
         assertTrue(normalized1.isNotBlank())
     }
+
+    @Test
+    fun testNormalizeForComparisonNonLatin() {
+        // Non-Latin scripts (Cyrillic, Japanese, Korean, Persian) must not become empty
+        val cyrillic = "Группа крови".normalizeForComparison()
+        assertEquals("группа крови", cyrillic)
+
+        val japanese = "夜に駆ける".normalizeForComparison()
+        assertEquals("夜に駆ける", japanese)
+
+        val persian = "گل سنگم".normalizeForComparison()
+        assertEquals("گل سنگم", persian)
+
+        val korean1 = "봄날 (Spring Day)".normalizeForComparison()
+        val korean2 = "봄날".normalizeForComparison()
+        assertTrue(korean2.isNotBlank())
+        assertTrue(korean1.contains(korean2))
+
+        // Two different non-Latin titles must not normalize to the same empty string
+        val diff1 = "夜に駆ける".normalizeForComparison()
+        val diff2 = "アイドル".normalizeForComparison()
+        assertTrue(diff1.isNotBlank())
+        assertTrue(diff2.isNotBlank())
+        org.junit.Assert.assertNotEquals(diff1, diff2)
+    }
 }

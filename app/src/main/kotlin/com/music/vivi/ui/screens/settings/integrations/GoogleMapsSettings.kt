@@ -56,7 +56,7 @@ fun GoogleMapsSettings(
     scrollBehavior: TopAppBarScrollBehavior,
 ) {
     val context = LocalContext.current
-    val (listenInMaps, onListenInMapsChange) = rememberPreference(ListenInMapsKey, defaultValue = true)
+    val (listenInMaps, onListenInMapsChange) = rememberPreference(ListenInMapsKey, defaultValue = false)
 
     Scaffold(
         topBar = {

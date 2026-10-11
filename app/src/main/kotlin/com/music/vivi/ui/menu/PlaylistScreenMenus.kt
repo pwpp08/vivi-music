@@ -41,7 +41,6 @@ fun LocalPlaylistMenu(
     onDownload: () -> Unit,
     onQueue: () -> Unit,
     onDismiss: () -> Unit,
-    onSyncToSpotify: (() -> Unit)? = null,
     onAddSongs: (() -> Unit)? = null,
     onScanDuplicates: (() -> Unit)? = null,
 ) {
@@ -95,7 +94,6 @@ fun LocalPlaylistMenu(
     }
 
     val isYouTubePlaylist = playlist.playlist.browseId != null
-    val isSpotifyPlaylist = playlist.id.startsWith("SPOTIFY_")
 
     val menuItems = buildList {
         if (playlist.playlist.isEditable && onAddSongs != null) {
@@ -153,17 +151,14 @@ fun LocalPlaylistMenu(
             )
         }
 
-        // Show sync button for YouTube or Spotify playlists
-        if (isYouTubePlaylist || isSpotifyPlaylist) {
+        // Show sync button for YouTube playlists
+        if (isYouTubePlaylist) {
             add(
                 Material3MenuItemData(
                     title = { Text(stringResource(R.string.action_sync)) },
                     description = {
                         Text(
-                            stringResource(
-                                if (isSpotifyPlaylist) R.string.sync_playlist_spotify_desc
-                                else R.string.sync_playlist_desc
-                            )
+                            stringResource(R.string.sync_playlist_desc)
                         )
                     },
                     icon = {
@@ -174,25 +169,6 @@ fun LocalPlaylistMenu(
                     },
                     onClick = {
                         onSync()
-                        onDismiss()
-                    }
-                )
-            )
-        }
-
-        if (!isSpotifyPlaylist && onSyncToSpotify != null) {
-            add(
-                Material3MenuItemData(
-                    title = { Text(stringResource(R.string.sync_to_spotify)) },
-                    description = { Text(stringResource(R.string.sync_to_spotify_desc)) },
-                    icon = {
-                        Icon(
-                            painter = painterResource(R.drawable.spotify),
-                            contentDescription = null
-                        )
-                    },
-                    onClick = {
-                        onSyncToSpotify()
                         onDismiss()
                     }
                 )
