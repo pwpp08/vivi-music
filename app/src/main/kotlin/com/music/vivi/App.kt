@@ -554,7 +554,13 @@ private fun tryFindDownloadedArtwork(data: Any?): Bitmap? {
         }
 
         // 2. Check public music folder embedded tags
-        val musicDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)?.resolve("ViviMusic")
+        // Only attempt this when we know which video is meant; otherwise any image (album covers, avatars) would
+        // be answered with the first tagged file's artwork.
+        val musicDir = if (videoId != null) {
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)?.resolve("ViviMusic")
+        } else {
+            null
+        }
         if (musicDir != null && musicDir.exists()) {
             val files = musicDir.listFiles()
             if (files != null) {
@@ -565,8 +571,7 @@ private fun tryFindDownloadedArtwork(data: Any?): Bitmap? {
                             mmr.setDataSource(file.absolutePath)
                             val picture = mmr.embeddedPicture
                             if (picture != null) {
-                                val title = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
-                                if (videoId == null || file.name.contains(videoId, ignoreCase = true) || (title != null && str.contains(title, ignoreCase = true))) {
+                                if (file.name.contains(videoId!!, ignoreCase = true)) {
                                     val bitmap = BitmapFactory.decodeByteArray(picture, 0, picture.size)
                                     if (bitmap != null) return bitmap
                                 }

@@ -1084,14 +1084,29 @@ constructor(
                 val fileName = if (isMp4) "${safeTitle}.m4a" else "${safeTitle}.opus"
                 val mimeType = if (isMp4) "audio/mp4" else "audio/opus"
 
-                val artworkBytes: ByteArray? = try {
-                    song.thumbnailUrl?.let { thumbUrl ->
-                        val fullUrl = thumbUrl.resize(1200, 1200)
-                        java.net.URL(fullUrl).openStream().use { it.readBytes() }
+                // Try the large cover first, then the original URL and YouTube's stock thumbnails, and finally the copy
+                // saved on the device, so one failed request does not leave the file without artwork.
+                val artworkBytes: ByteArray? = run {
+                    val candidateUrls = listOfNotNull(
+                        song.thumbnailUrl?.resize(1200, 1200),
+                        song.thumbnailUrl,
+                        "https://i.ytimg.com/vi/$songId/maxresdefault.jpg",
+                        "https://i.ytimg.com/vi/$songId/hqdefault.jpg",
+                    ).distinct()
+                    for (url in candidateUrls) {
+                        val bytes = try {
+                            val req = okhttp3.Request.Builder().url(url).build()
+                            streamHttpClient.newCall(req).execute().use { resp ->
+                                if (resp.isSuccessful) resp.body?.bytes() else null
+                            }
+                        } catch (e: Exception) {
+                            Timber.tag("DownloadUtil").w(e, "Failed to download thumbnail $url for $songId")
+                            null
+                        }
+                        if (bytes != null && bytes.size > 1024) return@run bytes
                     }
-                } catch (e: Exception) {
-                    Timber.tag("DownloadUtil").w(e, "Failed to download thumbnail bytes for $songId")
-                    null
+                    val saved = appContext.filesDir.resolve("thumbnails").resolve("$songId.jpg")
+                    if (saved.exists() && saved.length() > 0L) saved.readBytes() else null
                 }
 
                 val lyricsText: String? = try {

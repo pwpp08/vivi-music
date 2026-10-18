@@ -31,6 +31,8 @@ object AudioTagEmbedder {
         return try {
             if (isM4a || isMp4Header(audioBytes)) {
                 embedM4aMetadata(audioBytes, artworkBytes, lyrics, title, artist, album)
+            } else if (isWebmHeader(audioBytes)) {
+                embedWebmMetadata(audioBytes, artworkBytes, lyrics, title, artist, album)
             } else {
                 audioBytes
             }
@@ -51,6 +53,128 @@ object AudioTagEmbedder {
         if (audio.size < 8) return false
         val type = String(audio.copyOfRange(4, 8), Charsets.US_ASCII)
         return type == "ftyp" || type == "moov"
+    }
+
+    fun isWebmHeader(audio: ByteArray): Boolean {
+        return audio.size >= 4 &&
+            audio[0] == 0x1A.toByte() && audio[1] == 0x45.toByte() &&
+            audio[2] == 0xDF.toByte() && audio[3] == 0xA3.toByte()
+    }
+
+    // ─── WebM (Opus) Metadata Embedding ────────────────────────────────────────
+
+    private fun ebmlSize(value: Long): ByteArray {
+        var len = 1
+        while (len < 8 && value >= (1L shl (7 * len)) - 1) len++
+        val out = ByteArray(len)
+        val marked = value or (1L shl (7 * len))
+        for (i in 0 until len) out[i] = (marked shr (8 * (len - 1 - i))).toByte()
+        return out
+    }
+
+    private fun ebmlElement(id: ByteArray, payload: ByteArray): ByteArray {
+        val out = ByteArrayOutputStream()
+        out.write(id)
+        out.write(ebmlSize(payload.size.toLong()))
+        out.write(payload)
+        return out.toByteArray()
+    }
+
+    private fun ebmlElement(id: ByteArray, text: String): ByteArray = ebmlElement(id, text.toByteArray(Charsets.UTF_8))
+
+    private fun ids(vararg b: Int): ByteArray = ByteArray(b.size) { b[it].toByte() }
+
+    private fun webmSimpleTag(name: String, value: String): ByteArray {
+        val body = ByteArrayOutputStream()
+        body.write(ebmlElement(ids(0x45, 0xA3), name))
+        body.write(ebmlElement(ids(0x44, 0x87), value))
+        return ebmlElement(ids(0x67, 0xC8), body.toByteArray())
+    }
+
+    /**
+     * WebM carries the Opus audio YouTube serves. Cover art is stored as a Matroska attachment and the text fields as
+     * tags; both elements are appended to the end of the Segment, so no existing offsets need to move.
+     */
+    private fun embedWebmMetadata(
+        audio: ByteArray,
+        artwork: ByteArray?,
+        lyrics: String?,
+        title: String?,
+        artist: String?,
+        album: String?,
+    ): ByteArray {
+        fun readVint(at: Int): Pair<Long, Int>? {
+            if (at >= audio.size) return null
+            val first = audio[at].toInt() and 0xFF
+            var len = 1
+            var mask = 0x80
+            while (len <= 8 && (first and mask) == 0) { len++; mask = mask shr 1 }
+            if (len > 8 || at + len > audio.size) return null
+            var v = (first and (mask - 1)).toLong()
+            var allOnes = (first and (mask - 1)) == mask - 1
+            for (i in 1 until len) {
+                val b = audio[at + i].toInt() and 0xFF
+                if (b != 0xFF) allOnes = false
+                v = (v shl 8) or b.toLong()
+            }
+            return (if (allOnes) -1L else v) to len
+        }
+
+        // EBML header first, then the Segment.
+        var pos = 4
+        val (headerSize, headerLen) = readVint(pos) ?: return audio
+        if (headerSize < 0) return audio
+        pos += headerLen + headerSize.toInt()
+        if (pos + 4 > audio.size ||
+            audio[pos] != 0x18.toByte() || audio[pos + 1] != 0x53.toByte() ||
+            audio[pos + 2] != 0x80.toByte() || audio[pos + 3] != 0x67.toByte()
+        ) return audio
+        val sizePos = pos + 4
+        val (segSize, segLen) = readVint(sizePos) ?: return audio
+        val dataStart = sizePos + segLen
+        val segEnd = if (segSize < 0) audio.size else dataStart + segSize.toInt()
+        if (segEnd > audio.size || segEnd < dataStart) return audio
+
+        val extra = ByteArrayOutputStream()
+
+        if (artwork != null && artwork.isNotEmpty()) {
+            val isPng = artwork.size >= 8 && artwork[0] == 0x89.toByte() && artwork[1] == 0x50.toByte()
+            val file = ByteArrayOutputStream()
+            file.write(ebmlElement(ids(0x46, 0x6E), if (isPng) "cover.png" else "cover.jpg"))
+            file.write(ebmlElement(ids(0x46, 0x60), if (isPng) "image/png" else "image/jpeg"))
+            file.write(ebmlElement(ids(0x46, 0xAE), byteArrayOf(0, 0, 0, 0, 0, 0, 0, 1)))
+            file.write(ebmlElement(ids(0x46, 0x5C), artwork))
+            extra.write(ebmlElement(ids(0x19, 0x41, 0xA4, 0x69), ebmlElement(ids(0x61, 0xA7), file.toByteArray())))
+        }
+
+        val simpleTags = ByteArrayOutputStream()
+        if (!title.isNullOrBlank()) simpleTags.write(webmSimpleTag("TITLE", title))
+        if (!artist.isNullOrBlank()) simpleTags.write(webmSimpleTag("ARTIST", artist))
+        if (!album.isNullOrBlank()) simpleTags.write(webmSimpleTag("ALBUM", album))
+        if (!lyrics.isNullOrBlank() && lyrics != "LYRICS_NOT_FOUND") simpleTags.write(webmSimpleTag("LYRICS", lyrics))
+        if (simpleTags.size() > 0) {
+            val tag = ByteArrayOutputStream()
+            tag.write(ebmlElement(ids(0x63, 0xC0), ebmlElement(ids(0x68, 0xCA), byteArrayOf(50))))
+            tag.write(simpleTags.toByteArray())
+            extra.write(ebmlElement(ids(0x12, 0x54, 0xC3, 0x67), ebmlElement(ids(0x73, 0x73), tag.toByteArray())))
+        }
+        if (extra.size() == 0) return audio
+
+        val extraBytes = extra.toByteArray()
+        val result = ByteArrayOutputStream(audio.size + extraBytes.size)
+        result.write(audio, 0, segEnd)
+        result.write(extraBytes)
+        result.write(audio, segEnd, audio.size - segEnd)
+        val out = result.toByteArray()
+
+        if (segSize >= 0) {
+            // Rewrite the Segment size in place; it must still fit in the original number of size bytes.
+            val newSize = segSize + extraBytes.size
+            if (newSize >= (1L shl (7 * segLen)) - 1) return audio
+            val marked = newSize or (1L shl (7 * segLen))
+            for (i in 0 until segLen) out[sizePos + i] = (marked shr (8 * (segLen - 1 - i))).toByte()
+        }
+        return out
     }
 
     // ─── MP4 / M4A Metadata Embedding ──────────────────────────────────────────

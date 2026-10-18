@@ -130,6 +130,10 @@ fun PlaylistSpinWheelDialog(
     val view = LocalView.current
     val count = items.size
 
+    // Neighbouring covers on the wheel are shuffled so they never follow playlist order.
+    val order = remember(items) { items.indices.shuffled() }
+    val wheelItems = remember(items, order) { order.map { items[it] } }
+
     // Wheel position in "cards": integer values mean a card sits exactly under the pointer.
     var position by remember { mutableFloatStateOf(0f) }
     var isInteracting by remember { mutableStateOf(false) }
@@ -187,7 +191,7 @@ fun PlaylistSpinWheelDialog(
                 HapticFeedbackConstants.LONG_PRESS
             },
         )
-        onSongLanded(idx)
+        onSongLanded(order[idx])
     }
 
     fun startSettle(targetCards: Float, durationMs: Int, easing: Easing) {
@@ -300,7 +304,7 @@ fun PlaylistSpinWheelDialog(
                         .padding(horizontal = 28.dp)
                         .graphicsLayer { alpha = intro.value },
                 ) {
-                    val current = items[floorMod(centerIndex, count)]
+                    val current = wheelItems[floorMod(centerIndex, count)]
                     Text(
                         text = current.title,
                         style = MaterialTheme.typography.headlineSmall,
@@ -324,7 +328,7 @@ fun PlaylistSpinWheelDialog(
                 Spacer(Modifier.height(12.dp))
 
                 WheelOfCovers(
-                    items = items,
+                    items = wheelItems,
                     position = { position },
                     centerIndex = centerIndex,
                     landedIndex = landedIndex,

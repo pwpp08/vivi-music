@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -497,8 +498,8 @@ fun AlbumScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 32.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            .padding(horizontal = 24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Favorite/Save Button (Circular)
@@ -572,7 +573,7 @@ fun AlbumScreen(
                                     modifier = Modifier
                                         .animateWidth(playInteractionSource)
                                         .height(48.dp)
-                                        .weight(1.5f)
+                                        .widthIn(min = 132.dp)
                                 ) {
                                     Row(
                                         horizontalArrangement = Arrangement.Center,
@@ -596,7 +597,7 @@ fun AlbumScreen(
                                             style = MaterialTheme.typography.labelLarge,
                                             fontWeight = FontWeight.Bold,
                                             maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
+                                            softWrap = false
                                         )
                                     }
                                 }
