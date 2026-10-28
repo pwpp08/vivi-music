@@ -259,7 +259,6 @@ fun LocalSearchScreen(
                         isPlaying = isPlaying,
                         modifier = Modifier
                             .clickable {
-                                onDismiss()
                                 navController.navigate("album/${item.id}")
                             }
                             .animateItem(),
@@ -269,7 +268,6 @@ fun LocalSearchScreen(
                         artist = item,
                         modifier = Modifier
                             .clickable {
-                                onDismiss()
                                 navController.navigate("artist/${item.id}")
                             }
                             .animateItem(),
@@ -279,7 +277,6 @@ fun LocalSearchScreen(
                         playlist = item,
                         modifier = Modifier
                             .clickable {
-                                onDismiss()
                                 navController.navigate("local_playlist/${item.id}")
                             }
                             .animateItem(),

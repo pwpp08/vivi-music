@@ -178,10 +178,13 @@ fun CachePlaylistScreen(
     }
 
     val filteredSongs = remember(sortedSongs, query) {
-        if (query.text.isEmpty()) sortedSongs
+        if (query.text.isBlank()) sortedSongs
         else sortedSongs.filter { song ->
-            song.title.contains(query.text, true) ||
-                song.artists.any { it.name.contains(query.text, true) }
+            com.music.vivi.utils.matchesSongSearch(
+                query = query.text,
+                title = song.title,
+                artists = song.artists.map { it.name }
+            )
         }
     }
 

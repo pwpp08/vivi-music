@@ -142,7 +142,7 @@ fun OnlineSearchScreen(
             if (YouTubeUrlParser.isYouTubeUrl(it)) {
                 viewModel.query.value = it
             } else {
-                kotlinx.coroutines.delay(300L)
+                kotlinx.coroutines.delay(180L)
                 viewModel.query.value = it
             }
         }
@@ -351,7 +351,6 @@ fun OnlineSearchScreen(
                                         navController = navController,
                                         onDismiss = {
                                             menuState.dismiss()
-                                            onDismiss()
                                         }
                                     )
                                     is AlbumItem -> YouTubeAlbumMenu(
@@ -359,14 +358,12 @@ fun OnlineSearchScreen(
                                         navController = navController,
                                         onDismiss = {
                                             menuState.dismiss()
-                                            onDismiss()
                                         }
                                     )
                                     is ArtistItem -> YouTubeArtistMenu(
                                         artist = item,
                                         onDismiss = {
                                             menuState.dismiss()
-                                            onDismiss()
                                         }
                                     )
                                     is PlaylistItem -> YouTubePlaylistMenu(
@@ -374,7 +371,6 @@ fun OnlineSearchScreen(
                                         coroutineScope = scope,
                                         onDismiss = {
                                             menuState.dismiss()
-                                            onDismiss()
                                         }
                                     )
                                 }
@@ -414,15 +410,12 @@ fun OnlineSearchScreen(
                                 }
                                 is AlbumItem -> {
                                     navController.navigate("album/${item.id}")
-                                    onDismiss()
                                 }
                                 is ArtistItem -> {
                                     navController.navigate("artist/${item.id}")
-                                    onDismiss()
                                 }
                                 is PlaylistItem -> {
                                     navController.navigate("online_playlist/${item.id}")
-                                    onDismiss()
                                 }
                             }
                         },
@@ -442,14 +435,12 @@ fun OnlineSearchScreen(
                                         navController = navController,
                                         onDismiss = {
                                             menuState.dismiss()
-                                            onDismiss()
                                         }
                                     )
                                     is ArtistItem -> YouTubeArtistMenu(
                                         artist = item,
                                         onDismiss = {
                                             menuState.dismiss()
-                                            onDismiss()
                                         }
                                     )
                                     is PlaylistItem -> YouTubePlaylistMenu(
@@ -457,7 +448,6 @@ fun OnlineSearchScreen(
                                         coroutineScope = coroutineScope,
                                         onDismiss = {
                                             menuState.dismiss()
-                                            onDismiss()
                                         }
                                     )
                                 }
@@ -503,7 +493,6 @@ fun OnlineSearchScreen(
                                     navController = navController,
                                     onDismiss = {
                                         menuState.dismiss()
-                                        onDismiss()
                                     }
                                 )
                             }
@@ -586,7 +575,6 @@ fun OnlineSearchScreen(
                                     coroutineScope = scope,
                                     onDismiss = {
                                         menuState.dismiss()
-                                        onDismiss()
                                     }
                                 )
                             }
@@ -602,7 +590,6 @@ fun OnlineSearchScreen(
                     .combinedClickable(
                         onClick = {
                             navController.navigate("online_playlist/${item.id}")
-                            onDismiss()
                         },
                         onLongClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -612,7 +599,6 @@ fun OnlineSearchScreen(
                                     coroutineScope = scope,
                                     onDismiss = {
                                         menuState.dismiss()
-                                        onDismiss()
                                     }
                                 )
                             }

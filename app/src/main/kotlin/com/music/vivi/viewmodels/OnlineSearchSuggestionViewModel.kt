@@ -42,6 +42,13 @@ import javax.inject.Inject
 
 private const val DEFAULT_VIEW_PLAYLIST_COUNT = 4
 
+private data class SearchFetchResult(
+    val suggestions: com.music.innertube.models.SearchSuggestions?,
+    val lyricsSongs: List<SongItem>,
+    val directSongs: List<SongItem>,
+    val playlists: List<PlaylistItem>,
+)
+
 enum class SearchFilterOption {
     SONGS,
     ARTISTS,
@@ -97,34 +104,50 @@ constructor(
 
                         when (filter) {
                             SearchFilterOption.SONGS -> {
-                                val result = if (parsedUrl != null) null else YouTube.searchSuggestions(query).getOrNull()
-                                val localLyricsSongs = if (trimmedQuery.length >= 3) {
-                                    database.searchSongsByLyrics(trimmedQuery).firstOrNull().orEmpty().map { song ->
-                                        SongItem(
-                                            id = song.song.id,
-                                            title = song.song.title,
-                                            artists = song.artists.map { com.music.innertube.models.Artist(id = it.id, name = it.name) },
-                                            album = song.album?.let { com.music.innertube.models.Album(id = it.id, name = it.title) },
-                                            duration = song.song.duration,
-                                            thumbnail = song.song.thumbnailUrl ?: "",
-                                            explicit = song.song.explicit,
-                                            endpoint = WatchEndpoint(videoId = song.song.id)
-                                        )
+                                val fetchResult = coroutineScope {
+                                    val suggestionsDeferred = async {
+                                        if (parsedUrl != null) null else YouTube.searchSuggestions(query).getOrNull()
                                     }
-                                } else emptyList()
-
-                                val (directSongSearch, playlistResults) = if (parsedUrl == null && trimmedQuery.isNotEmpty()) {
-                                    coroutineScope {
-                                        val songsDeferred = async {
+                                    val lyricsDeferred = async {
+                                        if (trimmedQuery.length >= 3) {
+                                            database.searchSongsByLyrics(trimmedQuery).firstOrNull().orEmpty().map { song ->
+                                                SongItem(
+                                                    id = song.song.id,
+                                                    title = song.song.title,
+                                                    artists = song.artists.map { com.music.innertube.models.Artist(id = it.id, name = it.name) },
+                                                    album = song.album?.let { com.music.innertube.models.Album(id = it.id, name = it.title) },
+                                                    duration = song.song.duration,
+                                                    thumbnail = song.song.thumbnailUrl ?: "",
+                                                    explicit = song.song.explicit,
+                                                    endpoint = WatchEndpoint(videoId = song.song.id)
+                                                )
+                                            }
+                                        } else emptyList()
+                                    }
+                                    val songsDeferred = async {
+                                        if (parsedUrl == null && trimmedQuery.isNotEmpty()) {
                                             YouTube.search(trimmedQuery, YouTube.SearchFilter.FILTER_SONG).getOrNull()
                                                 ?.items
                                                 ?.filterIsInstance<SongItem>()
                                                 .orEmpty()
-                                        }
-                                        val playlistsDeferred = async { searchPlaylists(trimmedQuery) }
-                                        songsDeferred.await() to playlistsDeferred.await()
+                                        } else emptyList()
                                     }
-                                } else emptyList<SongItem>() to emptyList<PlaylistItem>()
+                                    val playlistsDeferred = async {
+                                        if (parsedUrl == null && trimmedQuery.isNotEmpty()) {
+                                            searchPlaylists(trimmedQuery)
+                                        } else emptyList()
+                                    }
+                                    SearchFetchResult(
+                                        suggestions = suggestionsDeferred.await(),
+                                        lyricsSongs = lyricsDeferred.await(),
+                                        directSongs = songsDeferred.await(),
+                                        playlists = playlistsDeferred.await()
+                                    )
+                                }
+                                val result = fetchResult.suggestions
+                                val localLyricsSongs = fetchResult.lyricsSongs
+                                val directSongSearch = fetchResult.directSongs
+                                val playlistResults = fetchResult.playlists
 
                                 val lyricsMatchedIds = localLyricsSongs.map { it.id }.toSet()
 

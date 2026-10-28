@@ -34,3 +34,43 @@ fun joinByBullet(vararg str: String?) =
         .filterNot {
             it.isNullOrEmpty()
         }.joinToString(separator = " • ")
+
+/**
+ * Robust playlist song search matcher that:
+ * 1. Trims query (handles trailing/leading spaces from mobile autocomplete)
+ * 2. Normalizes non-breaking spaces (\u00A0) and whitespace
+ * 3. Removes diacritics / accents (accent-insensitive)
+ * 4. Case-insensitively checks direct matches and word tokens
+ */
+fun matchesSongSearch(
+    query: String,
+    title: String,
+    artists: List<String>,
+): Boolean {
+    val cleanQuery = query.trim()
+    if (cleanQuery.isEmpty()) return true
+
+    fun normalize(s: String): String {
+        return java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD)
+            .replace(Regex("\\p{M}"), "")
+            .replace('\u00A0', ' ')
+            .lowercase()
+    }
+
+    val normQuery = normalize(cleanQuery)
+    val normTitle = normalize(title)
+    val normArtists = artists.map { normalize(it) }
+
+    // Direct match against title or any artist
+    if (normTitle.contains(normQuery) || normArtists.any { it.contains(normQuery) }) {
+        return true
+    }
+
+    // Tokenized word-by-word match
+    val tokens = normQuery.split(Regex("\\s+")).filter { it.isNotEmpty() }
+    if (tokens.isEmpty()) return true
+
+    return tokens.all { token ->
+        normTitle.contains(token) || normArtists.any { it.contains(token) }
+    }
+}

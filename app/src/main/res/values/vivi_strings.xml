@@ -1225,4 +1225,17 @@
     <string name="export_folder_reset">Use the default export folder</string>
     <string name="export_folder_set">Songs will now be exported to this folder</string>
     <string name="export_folder_picker_failed">No file manager was found to pick a folder</string>
+    <string name="music_match_title">Music Match</string>
+    <string name="music_match_subtitle">Swipe right to like • Swipe left to pass</string>
+    <string name="music_match_caught_up">You\'re all caught up!</string>
+    <string name="music_match_caught_up_desc">Tap below to find more songs similar to your taste.</string>
+    <string name="discover_more">Discover More</string>
+    <string name="action_pass">Pass</string>
+    <string name="badge_like">LIKE</string>
+    <string name="badge_nope">PASS</string>
+    <string name="action_expand_player">Expand player</string>
+    <string name="swiper_title">Music Match</string>
+    <string name="swiper_subtitle">Discover new songs tailored to your taste</string>
+    <string name="refresh">Refresh</string>
+    <string name="back">Back</string>
 </resources>

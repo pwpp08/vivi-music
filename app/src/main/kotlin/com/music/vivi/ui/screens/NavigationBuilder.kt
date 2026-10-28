@@ -486,4 +486,20 @@ fun NavGraphBuilder.navigationBuilder(
     composable("settings/commits") {
         CommitScreen(navController, scrollBehavior)
     }
+
+    composable("music_swiper") {
+        val pureBlackEnabled by rememberPreference(PureBlackKey, defaultValue = false)
+        val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
+        val isSystemInDarkTheme = isSystemInDarkTheme()
+        val useDarkTheme = remember(darkTheme, isSystemInDarkTheme) {
+            if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
+        }
+        val pureBlack = remember(pureBlackEnabled, useDarkTheme) {
+            pureBlackEnabled && useDarkTheme
+        }
+        MusicSwiperScreen(
+            navController = navController,
+            pureBlack = pureBlack
+        )
+    }
 }

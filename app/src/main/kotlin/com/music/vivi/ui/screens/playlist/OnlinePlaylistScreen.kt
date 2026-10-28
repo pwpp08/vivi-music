@@ -174,10 +174,13 @@ fun OnlinePlaylistScreen(
     var query by rememberSaveable(stateSaver = TextFieldValue.Saver) { mutableStateOf(TextFieldValue()) }
 
     val filteredSongs = remember(songs, query) {
-        if (query.text.isEmpty()) songs.mapIndexed { i, s -> i to s }
+        if (query.text.isBlank()) songs.mapIndexed { i, s -> i to s }
         else songs.mapIndexed { i, s -> i to s }.filter {
-            it.second.title.contains(query.text, true) ||
-                    it.second.artists.fastAny { a -> a.name.contains(query.text, true) }
+            com.music.vivi.utils.matchesSongSearch(
+                query = query.text,
+                title = it.second.title,
+                artists = it.second.artists.map { a -> a.name }
+            )
         }
     }
 
@@ -627,6 +630,7 @@ private fun OnlinePlaylistHeader(
                         )
                     }
                 }
+                val playerBottomSheetState = com.music.vivi.LocalPlayerBottomSheetState.current
                 com.music.vivi.ui.component.PlaylistSpinWheelDialog(
                     playlistName = playlist.title,
                     items = wheelItems,
@@ -640,8 +644,12 @@ private fun OnlinePlaylistHeader(
                                 startIndex = index,
                             )
                         )
+                        playerBottomSheetState?.expandSoft()
                     },
-                    onDismiss = { showSpinWheel = false },
+                    onDismiss = {
+                        showSpinWheel = false
+                        playerBottomSheetState?.expandSoft()
+                    },
                 )
             }
             Box(

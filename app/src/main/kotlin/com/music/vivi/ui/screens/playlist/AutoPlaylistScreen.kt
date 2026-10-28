@@ -287,10 +287,13 @@ fun AutoPlaylistScreen(
     }
 
     val filteredSongs = remember(songs, query) {
-        if (query.text.isEmpty()) songs ?: emptyList()
+        if (query.text.isBlank()) songs ?: emptyList()
         else songs?.filter { song ->
-            song.song.title.contains(query.text, true) ||
-                song.artists.any { it.name.contains(query.text, true) }
+            com.music.vivi.utils.matchesSongSearch(
+                query = query.text,
+                title = song.song.title,
+                artists = song.artists.map { it.name }
+            )
         } ?: emptyList()
     }
 

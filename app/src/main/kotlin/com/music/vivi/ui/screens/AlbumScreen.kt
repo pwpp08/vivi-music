@@ -492,151 +492,128 @@ fun AlbumScreen(
                     val shuffleInteractionSource = remember { MutableInteractionSource() }
 
                     // Action Buttons Row
-                    ButtonGroup(
-                        overflowIndicator = { menuState ->
-                            ButtonGroupDefaults.OverflowIndicator(menuState = menuState)
-                        },
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 24.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Favorite/Save Button (Circular)
-                        customItem(
-                            buttonGroupContent = {
-                                Surface(
-                                    onClick = {
-                                        database.query {
-                                            update(albumWithSongs.album.toggleLike())
-                                        }
-                                    },
-                                    shape = CircleShape,
-                                    color = MaterialTheme.colorScheme.surfaceVariant,
-                                    interactionSource = favoriteInteractionSource,
-                                    modifier = Modifier
-                                        .animateWidth(favoriteInteractionSource)
-                                        .size(48.dp)
-                                ) {
-                                    Box(
-                                        contentAlignment = Alignment.Center,
-                                        modifier = Modifier.fillMaxSize()
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(
-                                                if (albumWithSongs.album.bookmarkedAt != null) {
-                                                    R.drawable.favorite
-                                                } else {
-                                                    R.drawable.favorite_border
-                                                }
-                                            ),
-                                            contentDescription = if (albumWithSongs.album.bookmarkedAt != null) stringResource(R.string.saved) else stringResource(R.string.save),
-                                            modifier = Modifier.size(22.dp),
-                                            tint = if (albumWithSongs.album.bookmarkedAt != null) {
-                                                MaterialTheme.colorScheme.error
-                                            } else {
-                                                MaterialTheme.colorScheme.onSurface
-                                            }
-                                        )
-                                    }
+                        Surface(
+                            onClick = {
+                                database.query {
+                                    update(albumWithSongs.album.toggleLike())
                                 }
                             },
-                            menuContent = {}
-                        )
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            interactionSource = favoriteInteractionSource,
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                Icon(
+                                    painter = painterResource(
+                                        if (albumWithSongs.album.bookmarkedAt != null) {
+                                            R.drawable.favorite
+                                        } else {
+                                            R.drawable.favorite_border
+                                        }
+                                    ),
+                                    contentDescription = if (albumWithSongs.album.bookmarkedAt != null) stringResource(R.string.saved) else stringResource(R.string.save),
+                                    modifier = Modifier.size(22.dp),
+                                    tint = if (albumWithSongs.album.bookmarkedAt != null) {
+                                        MaterialTheme.colorScheme.error
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface
+                                    }
+                                )
+                            }
+                        }
 
                         // Play Button (Centered Capsule)
-                        customItem(
-                            buttonGroupContent = {
-                                androidx.compose.material3.Button(
-                                    onClick = {
-                                        if (isPlaying && mediaMetadata?.album?.id == albumWithSongs.album.id) {
-                                            playerConnection.player.pause()
-                                        } else if (mediaMetadata?.album?.id == albumWithSongs.album.id) {
-                                            playerConnection.player.play()
-                                        } else {
-                                            playerConnection.service.getAutomix(playlistId)
-                                            playerConnection.playQueue(
-                                                LocalAlbumRadio(albumWithSongs)
-                                            )
-                                        }
-                                    },
-                                    shape = CircleShape,
-                                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary,
-                                        contentColor = MaterialTheme.colorScheme.onPrimary
-                                    ),
-                                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                                        vertical = 12.dp,
-                                        horizontal = 16.dp
-                                    ),
-                                    interactionSource = playInteractionSource,
-                                    modifier = Modifier
-                                        .animateWidth(playInteractionSource)
-                                        .height(48.dp)
-                                        .widthIn(min = 132.dp)
-                                ) {
-                                    Row(
-                                        horizontalArrangement = Arrangement.Center,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(
-                                                if (isPlaying && mediaMetadata?.album?.id == albumWithSongs.album.id)
-                                                    R.drawable.pause
-                                                else
-                                                    R.drawable.play
-                                            ),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(20.dp),
-                                            tint = MaterialTheme.colorScheme.onPrimary
-                                        )
-                                        Spacer(Modifier.width(8.dp))
-                                        Text(
-                                            text = if (isPlaying && mediaMetadata?.album?.id == albumWithSongs.album.id)
-                                                stringResource(R.string.pause) else stringResource(R.string.play),
-                                            style = MaterialTheme.typography.labelLarge,
-                                            fontWeight = FontWeight.Bold,
-                                            maxLines = 1,
-                                            softWrap = false
-                                        )
-                                    }
+                        androidx.compose.material3.Button(
+                            onClick = {
+                                if (isPlaying && mediaMetadata?.album?.id == albumWithSongs.album.id) {
+                                    playerConnection.player.pause()
+                                } else if (mediaMetadata?.album?.id == albumWithSongs.album.id) {
+                                    playerConnection.player.play()
+                                } else {
+                                    playerConnection.service.getAutomix(playlistId)
+                                    playerConnection.playQueue(
+                                        LocalAlbumRadio(albumWithSongs)
+                                    )
                                 }
                             },
-                            menuContent = {}
-                        )
+                            shape = CircleShape,
+                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                                vertical = 12.dp,
+                                horizontal = 16.dp
+                            ),
+                            interactionSource = playInteractionSource,
+                            modifier = Modifier
+                                .height(48.dp)
+                                .widthIn(min = 132.dp)
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    painter = painterResource(
+                                        if (isPlaying && mediaMetadata?.album?.id == albumWithSongs.album.id)
+                                            R.drawable.pause
+                                        else
+                                            R.drawable.play
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.onPrimary
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = if (isPlaying && mediaMetadata?.album?.id == albumWithSongs.album.id)
+                                        stringResource(R.string.pause) else stringResource(R.string.play),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
+                            }
+                        }
 
                         // Shuffle Button (Circular)
-                        customItem(
-                            buttonGroupContent = {
-                                Surface(
-                                    onClick = {
-                                        playerConnection.service.getAutomix(playlistId)
-                                        playerConnection.playQueue(
-                                            LocalAlbumRadio(albumWithSongs.copy(songs = albumWithSongs.songs.shuffled())),
-                                        )
-                                    },
-                                    shape = CircleShape,
-                                    color = MaterialTheme.colorScheme.surfaceVariant,
-                                    interactionSource = shuffleInteractionSource,
-                                    modifier = Modifier
-                                        .animateWidth(shuffleInteractionSource)
-                                        .size(48.dp)
-                                ) {
-                                    Box(
-                                        contentAlignment = Alignment.Center,
-                                        modifier = Modifier.fillMaxSize()
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.shuffle),
-                                            contentDescription = stringResource(R.string.shuffle_label),
-                                            modifier = Modifier.size(20.dp),
-                                            tint = MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-                                }
+                        Surface(
+                            onClick = {
+                                playerConnection.service.getAutomix(playlistId)
+                                playerConnection.playQueue(
+                                    LocalAlbumRadio(albumWithSongs.copy(songs = albumWithSongs.songs.shuffled())),
+                                )
                             },
-                            menuContent = {}
-                        )
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            interactionSource = shuffleInteractionSource,
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.shuffle),
+                                    contentDescription = stringResource(R.string.shuffle_label),
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
                     }
 
 
@@ -968,7 +945,7 @@ fun AlbumScreen(
                         .padding(32.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    ContainedLoadingIndicator()
+                    androidx.compose.material3.CircularProgressIndicator(modifier = Modifier.size(36.dp))
                 }
             }
         }

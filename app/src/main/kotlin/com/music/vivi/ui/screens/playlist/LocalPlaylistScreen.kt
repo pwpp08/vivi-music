@@ -229,14 +229,15 @@ fun LocalPlaylistScreen(
 
     val filteredSongs =
         remember(songs, query) {
-            if (query.text.isEmpty()) {
+            if (query.text.isBlank()) {
                 songs
             } else {
                 songs.filter { song ->
-                    song.song.song.title
-                        .contains(query.text, ignoreCase = true) ||
-                            song.song.artists
-                                .fastAny { it.name.contains(query.text, ignoreCase = true) }
+                    com.music.vivi.utils.matchesSongSearch(
+                        query = query.text,
+                        title = song.song.song.title,
+                        artists = song.song.artists.map { it.name }
+                    )
                 }
             }
         }
@@ -1133,6 +1134,7 @@ fun LocalPlaylistHeader(
                 )
             }
         }
+        val playerBottomSheetState = com.music.vivi.LocalPlayerBottomSheetState.current
         if (showSpinWheel && songs.isNotEmpty()) {
             val wheelItems = remember(songs) {
                 songs.map { playlistSong ->
@@ -1156,8 +1158,12 @@ fun LocalPlaylistHeader(
                             playlistId = playlist.id,
                         )
                     )
+                    playerBottomSheetState?.expandSoft()
                 },
-                onDismiss = { showSpinWheel = false },
+                onDismiss = {
+                    showSpinWheel = false
+                    playerBottomSheetState?.expandSoft()
+                },
             )
         }
 
