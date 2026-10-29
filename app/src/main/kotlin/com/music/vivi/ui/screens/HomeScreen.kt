@@ -1081,7 +1081,10 @@ fun HomeScreen(
                                             }
                                         }
                                     } else {
-                                        ContainedLoadingIndicator()
+                                        androidx.compose.material3.CircularProgressIndicator(
+                                            modifier = Modifier.size(24.dp),
+                                            strokeWidth = 2.dp
+                                        )
                                     }
                                 }
                             }
@@ -1119,7 +1122,7 @@ fun HomeScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        painter = painterResource(R.drawable.swipe),
+                                        painter = painterResource(R.drawable.ic_music_match),
                                         contentDescription = null,
                                         tint = Color.White,
                                         modifier = Modifier.size(26.dp)

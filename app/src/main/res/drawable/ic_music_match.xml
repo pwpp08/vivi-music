@@ -1,0 +1,11 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Music Match: Flame silhouette with cut-out musical note -->
+    <path
+        android:fillColor="@android:color/white"
+        android:fillType="evenOdd"
+        android:pathData="M12,22C7.5,22 4.5,18.5 4.5,14.5C4.5,11.5 6.2,9.2 8,7.5C9.2,6.4 10.5,5.2 11.2,3.5C11.5,2.8 11.7,2 11.7,1.5C12.2,2 12.8,2.8 13.2,3.8C14.2,6.2 13.8,8.2 13.2,10.2C15.5,8.8 17.5,11 18.5,12.5C19.2,13.6 19.5,14.8 19.5,16C19.5,19.3 16.1,22 12,22ZM11,18.5C10.17,18.5 9.5,17.83 9.5,17C9.5,16.17 10.17,15.5 11,15.5C11.83,15.5 12.5,16.17 12.5,17L12.5,11.5C12.5,10.95 12.95,10.5 13.5,10.5L16,10.5L16,12.2L13.8,12.2L13.8,17C13.8,17.83 12.83,18.5 12,18.5Z" />
+</vector>

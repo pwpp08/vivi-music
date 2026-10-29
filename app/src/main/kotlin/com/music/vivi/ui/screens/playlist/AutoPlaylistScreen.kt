@@ -292,7 +292,8 @@ fun AutoPlaylistScreen(
             com.music.vivi.utils.matchesSongSearch(
                 query = query.text,
                 title = song.song.title,
-                artists = song.artists.map { it.name }
+                artists = song.artists.map { it.name },
+                album = song.album?.title
             )
         } ?: emptyList()
     }

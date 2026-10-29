@@ -57,6 +57,7 @@ class MusicSwiperViewModel @Inject constructor(
                 val likedSongs = database.likedSongsByCreateDateAsc().firstOrNull().orEmpty()
                 val recentSongs = database.mostPlayedSongs(20).firstOrNull().orEmpty()
                 val allTasteSeeds = (likedSongs + recentSongs).distinctBy { it.id }.shuffled()
+                val excludedSongIds = (likedSongs.map { it.id } + recentSongs.map { it.id }).toSet()
 
                 val newRecommendations = mutableListOf<SongItem>()
 
@@ -67,7 +68,7 @@ class MusicSwiperViewModel @Inject constructor(
                         val items = result?.items.orEmpty()
                         for (item in items) {
                             if (!seenSongIds.contains(item.id) &&
-                                likedSongs.none { it.id == item.id } &&
+                                !excludedSongIds.contains(item.id) &&
                                 newRecommendations.none { it.id == item.id }
                             ) {
                                 newRecommendations.add(item)
@@ -82,7 +83,10 @@ class MusicSwiperViewModel @Inject constructor(
                     val fallbackSearch = YouTube.search("trending hits", YouTube.SearchFilter.FILTER_SONG).getOrNull()
                     val fallbackItems = fallbackSearch?.items?.filterIsInstance<SongItem>().orEmpty()
                     for (item in fallbackItems) {
-                        if (!seenSongIds.contains(item.id) && newRecommendations.none { it.id == item.id }) {
+                        if (!seenSongIds.contains(item.id) &&
+                            !excludedSongIds.contains(item.id) &&
+                            newRecommendations.none { it.id == item.id }
+                        ) {
                             newRecommendations.add(item)
                         }
                     }

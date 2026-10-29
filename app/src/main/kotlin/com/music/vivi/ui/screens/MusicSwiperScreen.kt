@@ -6,6 +6,7 @@
 package com.music.vivi.ui.screens
 
 import android.view.HapticFeedbackConstants
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
@@ -20,6 +21,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,7 +30,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -48,8 +49,12 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -76,8 +81,9 @@ import com.music.vivi.LocalPlayerAwareWindowInsets
 import com.music.vivi.LocalPlayerBottomSheetState
 import com.music.vivi.LocalPlayerConnection
 import com.music.vivi.R
+import com.music.vivi.extensions.toMediaItem
 import com.music.vivi.models.toMediaMetadata
-import com.music.vivi.playback.queues.YouTubeQueue
+import com.music.vivi.playback.queues.ListQueue
 import com.music.vivi.utils.makeTimeString
 import com.music.vivi.viewmodels.MusicSwiperViewModel
 import kotlinx.coroutines.launch
@@ -99,23 +105,41 @@ fun MusicSwiperScreen(
     val currentMediaMetadata by playerConnection?.mediaMetadata?.collectAsState() ?: remember { kotlinx.coroutines.flow.MutableStateFlow(null) }.collectAsState()
     val isPlaying by playerConnection?.isPlaying?.collectAsState() ?: remember { kotlinx.coroutines.flow.MutableStateFlow(false) }.collectAsState()
 
-    val coroutineScope = rememberCoroutineScope()
     val view = LocalView.current
+
+    // Handle system back gesture smoothly without any lag
+    BackHandler {
+        navController.navigateUp()
+    }
 
     val currentTopCard = cards.firstOrNull()
     val isCurrentCardPlaying = currentTopCard != null && isPlaying && currentMediaMetadata?.id == currentTopCard.id
 
     val surfaceBg = if (pureBlack) Color.Black else MaterialTheme.colorScheme.background
 
+    // Calculate player aware insets so bottom action buttons sit comfortably above the mini player
+    val playerAwareBottomPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues().calculateBottomPadding()
+
+    fun playCard(song: SongItem) {
+        playerConnection?.playQueue(
+            ListQueue(
+                title = "Music Match",
+                items = listOf(song.toMediaMetadata().toMediaItem()),
+                startIndex = 0,
+            )
+        )
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(surfaceBg)
-            .statusBarsPadding()
-            .navigationBarsPadding(),
+            .statusBarsPadding(),
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = playerAwareBottomPadding.coerceAtLeast(16.dp)),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             // Top Bar
@@ -193,7 +217,7 @@ fun MusicSwiperScreen(
                 text = stringResource(R.string.music_match_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                modifier = Modifier.padding(bottom = 12.dp),
+                modifier = Modifier.padding(bottom = 8.dp),
             )
 
             // Card Deck Area
@@ -236,6 +260,7 @@ fun MusicSwiperScreen(
                             onClick = { viewModel.loadRecommendations() },
                             shape = CircleShape,
                             color = MaterialTheme.colorScheme.primary,
+                            shadowElevation = 4.dp,
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
@@ -263,40 +288,47 @@ fun MusicSwiperScreen(
                     stackCards.forEachIndexed { reversedIdx, card ->
                         val index = (stackCards.size - 1) - reversedIdx
                         val isTop = index == 0
-                        SwipeableSongCard(
-                            key = card.id,
-                            song = card,
-                            isTop = isTop,
-                            index = index,
-                            isPlaying = isPlaying && currentMediaMetadata?.id == card.id,
-                            onPlayToggle = {
-                                if (isPlaying && currentMediaMetadata?.id == card.id) {
-                                    playerConnection?.player?.pause()
-                                } else {
-                                    playerConnection?.playQueue(
-                                        YouTubeQueue.radio(card.toMediaMetadata())
-                                    )
-                                }
-                            },
-                            onSwipedRight = {
-                                view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-                                viewModel.swipeRight(card)
-                            },
-                            onSwipedLeft = {
-                                view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-                                viewModel.swipeLeft(card)
-                            },
-                        )
+                        key(card.id) {
+                            SwipeableSongCard(
+                                song = card,
+                                isTop = isTop,
+                                index = index,
+                                isPlaying = isPlaying && currentMediaMetadata?.id == card.id,
+                                onPlayToggle = {
+                                    if (isPlaying && currentMediaMetadata?.id == card.id) {
+                                        playerConnection?.player?.pause()
+                                    } else {
+                                        playCard(card)
+                                    }
+                                },
+                                onSwipedRight = {
+                                    view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                                    val nextCard = cards.getOrNull(1)
+                                    viewModel.swipeRight(card)
+                                    if (nextCard != null) {
+                                        playCard(nextCard)
+                                    }
+                                },
+                                onSwipedLeft = {
+                                    view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                                    val nextCard = cards.getOrNull(1)
+                                    viewModel.swipeLeft(card)
+                                    if (nextCard != null) {
+                                        playCard(nextCard)
+                                    }
+                                },
+                            )
+                        }
                     }
                 }
             }
 
-            // Bottom Action Controls
+            // Bottom Action Controls (positioned comfortably above the song bar)
             if (cards.isNotEmpty() && currentTopCard != null) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 32.dp, vertical = 20.dp),
+                        .padding(horizontal = 24.dp, vertical = 10.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -323,12 +355,16 @@ fun MusicSwiperScreen(
                     Surface(
                         onClick = {
                             view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                            val nextCard = cards.getOrNull(1)
                             viewModel.swipeLeft(currentTopCard)
+                            if (nextCard != null) {
+                                playCard(nextCard)
+                            }
                         },
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.85f),
                         shadowElevation = 6.dp,
-                        modifier = Modifier.size(62.dp),
+                        modifier = Modifier.size(60.dp),
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
@@ -340,15 +376,13 @@ fun MusicSwiperScreen(
                         }
                     }
 
-                    // Play / Preview button
+                    // Play / Preview button (Plays THIS EXACT CARD)
                     Surface(
                         onClick = {
                             if (isCurrentCardPlaying) {
                                 playerConnection?.player?.pause()
                             } else {
-                                playerConnection?.playQueue(
-                                    YouTubeQueue.radio(currentTopCard.toMediaMetadata())
-                                )
+                                playCard(currentTopCard)
                             }
                         },
                         shape = CircleShape,
@@ -370,12 +404,16 @@ fun MusicSwiperScreen(
                     Surface(
                         onClick = {
                             view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                            val nextCard = cards.getOrNull(1)
                             viewModel.swipeRight(currentTopCard)
+                            if (nextCard != null) {
+                                playCard(nextCard)
+                            }
                         },
                         shape = CircleShape,
                         color = Color(0xFF2E7D32),
                         shadowElevation = 6.dp,
-                        modifier = Modifier.size(62.dp),
+                        modifier = Modifier.size(60.dp),
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
@@ -391,9 +429,7 @@ fun MusicSwiperScreen(
                     IconButton(
                         onClick = {
                             if (currentMediaMetadata?.id != currentTopCard.id) {
-                                playerConnection?.playQueue(
-                                    YouTubeQueue.radio(currentTopCard.toMediaMetadata())
-                                )
+                                playCard(currentTopCard)
                             }
                             playerBottomSheetState?.expandSoft()
                         },
@@ -411,7 +447,7 @@ fun MusicSwiperScreen(
                     }
                 }
             } else {
-                Spacer(Modifier.height(102.dp))
+                Spacer(Modifier.height(80.dp))
             }
         }
     }
@@ -419,7 +455,6 @@ fun MusicSwiperScreen(
 
 @Composable
 private fun SwipeableSongCard(
-    key: String,
     song: SongItem,
     isTop: Boolean,
     index: Int,
@@ -429,8 +464,12 @@ private fun SwipeableSongCard(
     onSwipedLeft: () -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val offsetX = remember { Animatable(0f) }
-    val offsetY = remember { Animatable(0f) }
+    var isDragging by remember(song.id) { mutableStateOf(false) }
+    var dragX by remember(song.id) { mutableFloatStateOf(0f) }
+    var dragY by remember(song.id) { mutableFloatStateOf(0f) }
+
+    val animX = remember(song.id) { Animatable(0f) }
+    val animY = remember(song.id) { Animatable(0f) }
 
     // Depth scaling for stack layers underneath
     val targetScale = when (index) {
@@ -449,6 +488,9 @@ private fun SwipeableSongCard(
     val shape = RoundedCornerShape(26.dp)
     val cardZIndex = 10f - index.toFloat()
 
+    val currentX = if (isDragging) dragX else animX.value
+    val currentY = if (isDragging) dragY else animY.value
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -459,9 +501,9 @@ private fun SwipeableSongCard(
                 scaleY = animatedScale
                 translationY = targetYOffset.toPx()
                 if (isTop) {
-                    translationX = offsetX.value
-                    translationY = targetYOffset.toPx() + offsetY.value
-                    rotationZ = (offsetX.value / 18f).coerceIn(-28f, 28f)
+                    translationX = currentX
+                    translationY = targetYOffset.toPx() + currentY
+                    rotationZ = (currentX / 20f).coerceIn(-28f, 28f)
                 }
             }
             .shadow(
@@ -471,34 +513,45 @@ private fun SwipeableSongCard(
             )
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .pointerInput(isTop) {
+            .pointerInput(isTop, song.id) {
                 if (!isTop) return@pointerInput
                 detectDragGestures(
+                    onDragStart = {
+                        isDragging = true
+                        dragX = 0f
+                        dragY = 0f
+                    },
                     onDragEnd = {
-                        val distance = offsetX.value
-                        if (distance > 320f) {
-                            coroutineScope.launch {
-                                offsetX.animateTo(1600f, tween(260))
+                        isDragging = false
+                        val distance = dragX
+                        coroutineScope.launch {
+                            animX.snapTo(distance)
+                            animY.snapTo(dragY)
+                            if (distance > 280f) {
+                                launch { animX.animateTo(1400f, tween(200)) }
                                 onSwipedRight()
-                            }
-                        } else if (distance < -320f) {
-                            coroutineScope.launch {
-                                offsetX.animateTo(-1600f, tween(260))
+                            } else if (distance < -280f) {
+                                launch { animX.animateTo(-1400f, tween(200)) }
                                 onSwipedLeft()
+                            } else {
+                                launch { animX.animateTo(0f, spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessMediumLow)) }
+                                launch { animY.animateTo(0f, spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessMediumLow)) }
                             }
-                        } else {
-                            coroutineScope.launch {
-                                launch { offsetX.animateTo(0f, spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessMediumLow)) }
-                                launch { offsetY.animateTo(0f, spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessMediumLow)) }
-                            }
+                        }
+                    },
+                    onDragCancel = {
+                        isDragging = false
+                        coroutineScope.launch {
+                            animX.snapTo(dragX)
+                            animY.snapTo(dragY)
+                            launch { animX.animateTo(0f, spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessMediumLow)) }
+                            launch { animY.animateTo(0f, spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessMediumLow)) }
                         }
                     },
                     onDrag = { change, dragAmount ->
                         change.consume()
-                        coroutineScope.launch {
-                            offsetX.snapTo(offsetX.value + dragAmount.x)
-                            offsetY.snapTo(offsetY.value + dragAmount.y * 0.45f)
-                        }
+                        dragX += dragAmount.x
+                        dragY += dragAmount.y * 0.45f
                     },
                 )
             },
@@ -529,113 +582,101 @@ private fun SwipeableSongCard(
                 ),
         )
 
-        // Playing status pill top right
-        if (isPlaying) {
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
+        // Floating dynamic LIKE badge (when dragging right)
+        if (isTop && currentX > 40f) {
+            val alpha = (currentX / 200f).coerceIn(0f, 1f)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(24.dp)
+                    .graphicsLayer { this.alpha = alpha; rotationZ = -12f }
+                    .border(3.dp, Color(0xFF4CAF50), RoundedCornerShape(8.dp))
+                    .background(Color(0xFF4CAF50).copy(alpha = 0.25f), RoundedCornerShape(8.dp))
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.badge_like),
+                    color = Color(0xFF4CAF50),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 2.sp,
+                )
+            }
+        }
+
+        // Floating dynamic NOPE badge (when dragging left)
+        if (isTop && currentX < -40f) {
+            val alpha = (abs(currentX) / 200f).coerceIn(0f, 1f)
+            Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(16.dp),
+                    .padding(24.dp)
+                    .graphicsLayer { this.alpha = alpha; rotationZ = 12f }
+                    .border(3.dp, Color(0xFFE53935), RoundedCornerShape(8.dp))
+                    .background(Color(0xFFE53935).copy(alpha = 0.25f), RoundedCornerShape(8.dp))
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.badge_nope),
+                    color = Color(0xFFE53935),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 2.sp,
+                )
+            }
+        }
+
+        // Play/Pause circular preview trigger right on card center
+        Surface(
+            onClick = onPlayToggle,
+            shape = CircleShape,
+            color = Color.Black.copy(alpha = 0.55f),
+            border = androidx.compose.foundation.BorderStroke(1.5.dp, Color.White.copy(alpha = 0.6f)),
+            modifier = Modifier
+                .align(Alignment.Center)
+                .size(68.dp),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    painter = painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(32.dp),
+                )
+            }
+        }
+
+        // Playing pill indicator
+        if (isPlaying) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 18.dp),
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.volume_up),
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(16.dp),
                     )
                     Text(
                         text = stringResource(R.string.playing_status),
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                 }
             }
         }
 
-        // In-card Play/Pause floating overlay on the artwork center
-        if (isTop) {
-            Surface(
-                onClick = onPlayToggle,
-                shape = CircleShape,
-                color = Color.Black.copy(alpha = 0.5f),
-                border = androidx.compose.foundation.BorderStroke(1.5.dp, Color.White.copy(alpha = 0.35f)),
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(68.dp),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        painter = painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(32.dp),
-                    )
-                }
-            }
-        }
-
-        // Swipe Feedback Badges ("LIKE" vs "NOPE")
-        if (isTop) {
-            val dragX = offsetX.value
-            // Like Badge (top left)
-            if (dragX > 40f) {
-                val likeAlpha = ((dragX - 40f) / 220f).coerceIn(0f, 1f)
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(24.dp)
-                        .graphicsLayer {
-                            alpha = likeAlpha
-                            rotationZ = -14f
-                        }
-                        .border(3.dp, Color(0xFF2E7D32), RoundedCornerShape(12.dp))
-                        .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
-                        .padding(horizontal = 14.dp, vertical = 6.dp),
-                ) {
-                    Text(
-                        text = stringResource(R.string.badge_like),
-                        color = Color(0xFF4CAF50),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 2.sp,
-                    )
-                }
-            }
-
-            // Nope Badge (top right)
-            if (dragX < -40f) {
-                val nopeAlpha = ((abs(dragX) - 40f) / 220f).coerceIn(0f, 1f)
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(24.dp)
-                        .graphicsLayer {
-                            alpha = nopeAlpha
-                            rotationZ = 14f
-                        }
-                        .border(3.dp, Color(0xFFD32F2F), RoundedCornerShape(12.dp))
-                        .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
-                        .padding(horizontal = 14.dp, vertical = 6.dp),
-                ) {
-                    Text(
-                        text = stringResource(R.string.badge_nope),
-                        color = Color(0xFFEF5350),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 2.sp,
-                    )
-                }
-            }
-        }
-
-        // Song Information at bottom
+        // Song Title, Artists, Album badge at the bottom of the card
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)

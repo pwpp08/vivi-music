@@ -159,8 +159,9 @@ fun TopPlaylistScreen(
         else songs?.filter { song ->
             com.music.vivi.utils.matchesSongSearch(
                 query = query.text,
-                title = song.title,
-                artists = song.artists.map { it.name }
+                title = song.song.title,
+                artists = song.artists.map { it.name },
+                album = song.album?.title
             )
         } ?: emptyList()
     }

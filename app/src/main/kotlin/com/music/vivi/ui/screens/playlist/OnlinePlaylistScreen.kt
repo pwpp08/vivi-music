@@ -179,7 +179,8 @@ fun OnlinePlaylistScreen(
             com.music.vivi.utils.matchesSongSearch(
                 query = query.text,
                 title = it.second.title,
-                artists = it.second.artists.map { a -> a.name }
+                artists = it.second.artists.map { a -> a.name },
+                album = it.second.album?.name
             )
         }
     }

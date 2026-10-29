@@ -236,7 +236,8 @@ fun LocalPlaylistScreen(
                     com.music.vivi.utils.matchesSongSearch(
                         query = query.text,
                         title = song.song.song.title,
-                        artists = song.song.artists.map { it.name }
+                        artists = song.song.artists.map { it.name },
+                        album = song.song.album?.title
                     )
                 }
             }
