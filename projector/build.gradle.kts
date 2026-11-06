@@ -13,9 +13,15 @@ android {
         versionCode = 1
         versionName = "1.0.0"
 
-        // The Wanbo X2 Pro is a 32-bit ARM device
-        ndk {
-            abiFilters += "armeabi-v7a"
+    }
+
+    // One small APK per architecture: armeabi-v7a (32-bit, e.g. Wanbo X2 Pro) and arm64-v8a (64-bit)
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a")
+            isUniversalApk = false
         }
     }
 

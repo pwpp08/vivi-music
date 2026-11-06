@@ -3,7 +3,7 @@ name: Projector + FOSS Build
 on:
   workflow_dispatch:
   push:
-    branches: [ 32-bit-projector ]
+    branches: [ projector ]
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -44,5 +44,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: vivi-projector
+          name: vivi-projector-32bit-and-64bit
           path: projector/build/outputs/apk/release/*.apk
