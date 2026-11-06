@@ -122,6 +122,17 @@
                 <data android:host="pair" />
             </intent-filter>
 
+            <!-- Vivi Projector settings sync (QR scanned with the phone camera) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="vivimusic" />
+                <data android:host="projector" />
+            </intent-filter>
+
             <!-- Youtube filter -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />

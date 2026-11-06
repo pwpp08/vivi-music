@@ -1,0 +1,8 @@
+-dontwarn org.mozilla.javascript.**
+-dontwarn javax.script.**
+-dontwarn jdk.dynalink.**
+-keep class org.schabi.newpipe.extractor.** { *; }
+-keep class org.mozilla.javascript.** { *; }
+-keep class com.music.innertube.** { *; }
+-keep class kotlinx.serialization.** { *; }
+-dontwarn com.google.re2j.**

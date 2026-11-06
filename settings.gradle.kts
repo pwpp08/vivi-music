@@ -28,6 +28,7 @@ rootProject.name = "vivimusic"
 include(":app")
 include(":core-database")
 include(":wear")
+include(":projector")
 include(":canvas")
 include(":innertube")
 include(":kizzy")

@@ -1,0 +1,48 @@
+name: Projector + FOSS Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ projector ]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Set Up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-disabled: true
+
+      - run: chmod +x gradlew
+
+      - name: Generate debug.keystore
+        run: |
+          mkdir -p ~/.android
+          keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android \
+            -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 \
+            -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Build phone (FOSS) and projector APKs
+        run: ./gradlew :app:assembleUniversalFossDebug :projector:assembleRelease --no-configuration-cache --console=plain --warning-mode summary
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vivi-phone-foss-debug
+          path: app/build/outputs/apk/universalFoss/debug/*.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vivi-projector
+          path: projector/build/outputs/apk/release/*.apk
