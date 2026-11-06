@@ -1400,6 +1400,17 @@ class MainActivity : ComponentActivity() {
             return
         }
 
+        val isProjectorLink = uri.scheme == "vivimusic" && uri.host?.equals("projector", ignoreCase = true) == true
+        if (isProjectorLink) {
+            val host = uri.getQueryParameter("host") ?: return
+            val port = uri.getQueryParameter("port")?.toIntOrNull() ?: return
+            val code = uri.getQueryParameter("code") ?: return
+            coroutineScope.launch(Dispatchers.IO) {
+                com.music.vivi.utils.ProjectorSyncUtils.pushToProjector(this@MainActivity, host, port, code)
+            }
+            return
+        }
+
         when (val path = uri.pathSegments.firstOrNull()) {
             "playlist" -> uri.getQueryParameter("list")?.let { playlistId ->
                 if (playlistId.startsWith("OLAK5uy_")) {
