@@ -1371,6 +1371,21 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private var pendingProjector: Triple<String, Int, String>? = null
+
+    private fun sendToProjector() {
+        val (host, port, code) = pendingProjector ?: return
+        pendingProjector = null
+        lifecycleScope.launch(Dispatchers.IO) {
+            com.music.vivi.utils.ProjectorSyncUtils.pushToProjector(this@MainActivity, host, port, code)
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == PROJECTOR_PERMISSION_REQUEST) sendToProjector()
+    }
+
     private fun handleDeepLinkIntent(intent: Intent, navController: NavHostController) {
         val navigateTo = intent.getStringExtra("navigate_to")
         if (!navigateTo.isNullOrBlank()) {
@@ -1405,8 +1420,12 @@ class MainActivity : ComponentActivity() {
             val host = uri.getQueryParameter("host") ?: return
             val port = uri.getQueryParameter("port")?.toIntOrNull() ?: return
             val code = uri.getQueryParameter("code") ?: return
-            coroutineScope.launch(Dispatchers.IO) {
-                com.music.vivi.utils.ProjectorSyncUtils.pushToProjector(this@MainActivity, host, port, code)
+            pendingProjector = Triple(host, port, code)
+            // Android 17+ blocks LAN connections from apps targeting API 37 until this is granted
+            if (Build.VERSION.SDK_INT >= 37 && checkSelfPermission(LOCAL_NETWORK_PERMISSION) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(LOCAL_NETWORK_PERMISSION), PROJECTOR_PERMISSION_REQUEST)
+            } else {
+                sendToProjector()
             }
             return
         }
@@ -1510,3 +1529,6 @@ val LocalSyncUtils = staticCompositionLocalOf<SyncUtils> { error("No SyncUtils p
 val LocalListenTogetherManager = staticCompositionLocalOf<com.music.vivi.listentogether.ListenTogetherManager?> { null }
 val LocalIsPlayerExpanded = compositionLocalOf { false }
 val LocalPlayerBottomSheetState = staticCompositionLocalOf<com.music.vivi.ui.component.BottomSheetState?> { null }
+
+private const val LOCAL_NETWORK_PERMISSION = "android.permission.ACCESS_LOCAL_NETWORK"
+private const val PROJECTOR_PERMISSION_REQUEST = 4711
