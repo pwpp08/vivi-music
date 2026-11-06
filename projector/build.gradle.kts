@@ -1,5 +1,6 @@
 plugins {
     id("com.android.application")
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -37,6 +38,10 @@ android {
         }
     }
 
+    buildFeatures {
+        compose = true
+    }
+
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_21
@@ -58,8 +63,15 @@ dependencies {
     implementation(libs.media3)
     implementation(libs.zxing.core)
     implementation(libs.coroutines.guava)
-    implementation("androidx.core:core:1.17.0")
-    implementation("androidx.collection:collection:1.5.0")
-    implementation("androidx.lifecycle:lifecycle-runtime:2.9.0")
+    implementation(libs.activity)
+    implementation(libs.compose.runtime)
+    implementation(libs.compose.foundation)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.animation)
+    implementation(libs.material3)
+    implementation("androidx.compose.material:material-icons-extended:1.7.8")
+    implementation(libs.viewmodel)
+    implementation(libs.coil)
+    implementation(libs.coil.network.okhttp)
     coreLibraryDesugaring(libs.desugaring)
 }
