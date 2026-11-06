@@ -113,6 +113,7 @@ fun OnlineSearchScreen(
 ) {
     val database = LocalDatabase.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
     val menuState = LocalMenuState.current
     val playerConnection = LocalPlayerConnection.current ?: return
 
@@ -228,6 +229,8 @@ fun OnlineSearchScreen(
                                             YouTubeQueue.radio(event.song.toMediaMetadata())
                                         )
                                     }
+                                    keyboardController?.hide()
+                                    focusManager.clearFocus()
                                     playerBottomSheetState?.expandSoft()
                                 },
                                 onLongClick = {
@@ -406,6 +409,8 @@ fun OnlineSearchScreen(
                                             YouTubeQueue.radio(item.toMediaMetadata())
                                         )
                                     }
+                                    keyboardController?.hide()
+                                    focusManager.clearFocus()
                                     playerBottomSheetState?.expandSoft()
                                 }
                                 is AlbumItem -> {
@@ -525,6 +530,8 @@ fun OnlineSearchScreen(
                                     YouTubeQueue.radio(item.toMediaMetadata())
                                 )
                             }
+                            keyboardController?.hide()
+                            focusManager.clearFocus()
                             playerBottomSheetState?.expandSoft()
                         },
                         onLongClick = {

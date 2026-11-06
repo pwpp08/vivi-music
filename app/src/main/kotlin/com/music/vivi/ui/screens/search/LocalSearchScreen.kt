@@ -83,6 +83,7 @@ fun LocalSearchScreen(
 ) {
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
     val menuState = LocalMenuState.current
     val playerConnection = LocalPlayerConnection.current ?: return
 
@@ -235,6 +236,8 @@ fun LocalSearchScreen(
                                             )
                                         )
                                     }
+                                    keyboardController?.hide()
+                                    focusManager.clearFocus()
                                     playerBottomSheetState?.expandSoft()
                                 },
                                 onLongClick = {

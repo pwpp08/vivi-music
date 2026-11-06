@@ -7,9 +7,19 @@ package com.music.vivi.ui.screens
 
 import android.view.HapticFeedbackConstants
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -228,7 +238,9 @@ fun MusicSwiperScreen(
                     .padding(horizontal = 24.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                if (cards.isEmpty()) {
+                if (cards.isEmpty() && isLoading) {
+                    AnalyzingTaste(fromPlaylist = viewModel.isPlaylistMatch)
+                } else if (cards.isEmpty()) {
                     // Empty state
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -737,6 +749,143 @@ private fun SwipeableSongCard(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun AnalyzingTaste(fromPlaylist: Boolean) {
+    val transition = rememberInfiniteTransition(label = "analyzing")
+    val pulse by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(2200, easing = LinearEasing)),
+        label = "pulse",
+    )
+    val spin by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(6000, easing = LinearEasing)),
+        label = "spin",
+    )
+    val bars = remember {
+        List(5) { index ->
+            Pair(index, 380 + index * 90)
+        }
+    }
+
+    val steps = listOf(
+        R.string.music_match_step_1,
+        R.string.music_match_step_2,
+        R.string.music_match_step_3,
+        R.string.music_match_step_4,
+    )
+    var step by remember { mutableStateOf(0) }
+    LaunchedEffect(Unit) {
+        while (step < steps.lastIndex) {
+            kotlinx.coroutines.delay(1800)
+            step += 1
+        }
+    }
+
+    val primary = MaterialTheme.colorScheme.primary
+    val tertiary = MaterialTheme.colorScheme.tertiary
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier.padding(32.dp),
+    ) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(200.dp)) {
+            // Three expanding rings, offset in phase, give a sonar-like "listening" feel.
+            for (ring in 0 until 3) {
+                val phase = (pulse + ring / 3f) % 1f
+                Box(
+                    modifier = Modifier
+                        .size(200.dp)
+                        .graphicsLayer {
+                            scaleX = 0.35f + phase * 0.65f
+                            scaleY = 0.35f + phase * 0.65f
+                            alpha = (1f - phase) * 0.55f
+                        }
+                        .border(2.dp, primary, CircleShape),
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .size(84.dp)
+                    .graphicsLayer { rotationZ = spin }
+                    .background(
+                        brush = Brush.sweepGradient(listOf(primary, tertiary, primary)),
+                        shape = CircleShape,
+                    ),
+            )
+            Box(
+                modifier = Modifier
+                    .size(68.dp)
+                    .background(MaterialTheme.colorScheme.surface, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_music_match),
+                    contentDescription = null,
+                    tint = primary,
+                    modifier = Modifier.size(34.dp),
+                )
+            }
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        Text(
+            text = stringResource(
+                if (fromPlaylist) R.string.music_match_analyzing_playlist else R.string.music_match_analyzing_taste,
+            ),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(6.dp))
+        AnimatedContent(
+            targetState = step,
+            transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(200)) },
+            label = "analyzingStep",
+        ) { current ->
+            Text(
+                text = stringResource(steps[current]),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        // Equaliser bars bouncing at different speeds.
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            verticalAlignment = Alignment.Bottom,
+            modifier = Modifier.height(28.dp),
+        ) {
+            bars.forEach { (index, duration) ->
+                val level by transition.animateFloat(
+                    initialValue = 0.25f,
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(duration, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse,
+                    ),
+                    label = "bar$index",
+                )
+                Box(
+                    modifier = Modifier
+                        .width(5.dp)
+                        .fillMaxHeight(level)
+                        .clip(CircleShape)
+                        .background(primary.copy(alpha = 0.55f + 0.45f * level)),
+                )
             }
         }
     }

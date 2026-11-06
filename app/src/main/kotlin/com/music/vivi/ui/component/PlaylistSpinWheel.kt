@@ -57,7 +57,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.util.lerp
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.unit.IntOffset
+import com.music.vivi.LocalPlayerBottomSheetState
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -143,6 +152,13 @@ fun PlaylistSpinWheelDialog(
     var animJob by remember { mutableStateOf<Job?>(null) }
     val intro = remember { Animatable(0f) }
 
+    // Zoom-into-artwork transition that plays after a song has been picked.
+    var centerBounds by remember { mutableStateOf<Rect?>(null) }
+    var rootSize by remember { mutableStateOf(IntSize.Zero) }
+    val zoom = remember { Animatable(0f) }
+    val overlayAlpha = remember { Animatable(1f) }
+    val playerSheet = LocalPlayerBottomSheetState.current
+
     val centerIndex by remember { derivedStateOf { position.roundToInt() } }
 
     // Intro: the wheel unrolls into place while the scrim fades in.
@@ -171,10 +187,19 @@ fun PlaylistSpinWheelDialog(
             }
     }
 
-    // Once a song has been picked, keep the overlay for a moment so the result is visible, then close.
+    // Once a song has been picked: let the result sink in, zoom its artwork to full screen while the player sheet opens
+    // underneath, then fade the overlay away so the now playing view takes over.
     LaunchedEffect(landedToken) {
-        if (landedToken == 0) return@LaunchedEffect
-        delay(1500)
+        if (landedToken == 0) {
+            zoom.snapTo(0f)
+            overlayAlpha.snapTo(1f)
+            return@LaunchedEffect
+        }
+        delay(450)
+        playerSheet?.expandSoft()
+        zoom.animateTo(1f, tween(520, easing = FastOutSlowInEasing))
+        delay(250)
+        overlayAlpha.animateTo(0f, tween(260))
         onDismiss()
     }
 
@@ -256,6 +281,7 @@ fun PlaylistSpinWheelDialog(
         ),
     ) {
         val scrimColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface
+        Box(modifier = Modifier.fillMaxSize().onSizeChanged { rootSize = it }) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -344,6 +370,7 @@ fun PlaylistSpinWheelDialog(
                         isInteracting = false
                         flingTo(velocityCards)
                     },
+                    onCenterBounds = { centerBounds = it },
                     onCardClick = { k ->
                         val relative = k - position.roundToInt()
                         if (relative == 0) {
@@ -388,6 +415,40 @@ fun PlaylistSpinWheelDialog(
                     },
                 )
             }
+        }
+
+        val landed = landedIndex
+        val from = centerBounds
+        if (landed >= 0 && from != null && zoom.value > 0f && rootSize != IntSize.Zero) {
+            val t = zoom.value
+            val density = LocalDensity.current
+            val width = lerp(from.width, rootSize.width.toFloat(), t)
+            val height = lerp(from.height, rootSize.height.toFloat(), t)
+            val x = lerp(from.left, 0f, t)
+            val y = lerp(from.top, 0f, t)
+            val radius = with(density) { lerp(24.dp.toPx(), 0f, t).toDp() }
+            Box(
+                modifier = Modifier
+                    .offset { IntOffset(x.roundToInt(), y.roundToInt()) }
+                    .size(
+                        width = with(density) { width.toDp() },
+                        height = with(density) { height.toDp() },
+                    )
+                    .graphicsLayer { alpha = overlayAlpha.value }
+                    .clip(RoundedCornerShape(radius))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+            ) {
+                val url = wheelItems[landed].thumbnailUrl
+                if (url != null) {
+                    AsyncImage(
+                        model = url,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+            }
+        }
         }
     }
 }
@@ -445,15 +506,19 @@ private fun WheelOfCovers(
     onDragStart: () -> Unit,
     onDrag: (deltaCards: Float) -> Unit,
     onDragStop: (velocityCards: Float) -> Unit,
+    onCenterBounds: (Rect) -> Unit,
     onCardClick: (card: Int) -> Unit,
 ) {
     val density = LocalDensity.current
     val count = items.size
 
+    var wheelOrigin by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(1f / 0.78f),
+            .aspectRatio(1f / 0.78f)
+            .onGloballyPositioned { wheelOrigin = it.positionInRoot() },
     ) {
         val widthPx = with(density) { maxWidth.toPx() }
         val cardSizeDp = maxWidth * 0.34f
@@ -462,6 +527,14 @@ private fun WheelOfCovers(
         val stepRad = Math.toRadians(STEP_DEGREES.toDouble())
         val pxPerCard = (radiusPx * stepRad).toFloat()
         val apexCenterY = cardSizePx * 0.62f
+
+        // Where the card under the pointer sits on screen (it is drawn 12% larger), so the zoom can start from it.
+        LaunchedEffect(wheelOrigin, widthPx, cardSizePx) {
+            val size = cardSizePx * 1.12f
+            val left = wheelOrigin.x + widthPx / 2f - size / 2f
+            val top = wheelOrigin.y + apexCenterY - size / 2f
+            onCenterBounds(Rect(left, top, left + size, top + size))
+        }
 
         val dragState = rememberDraggableState { delta -> onDrag(-delta / pxPerCard) }
 

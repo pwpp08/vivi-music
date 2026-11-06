@@ -6,6 +6,7 @@
 package com.music.vivi.viewmodels
 
 import android.content.Context
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.music.innertube.YouTube
@@ -30,7 +31,11 @@ import javax.inject.Inject
 class MusicSwiperViewModel @Inject constructor(
     @ApplicationContext val context: Context,
     val database: MusicDatabase,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
+
+    // When set, recommendations are seeded from this playlist instead of the whole library.
+    private val playlistId: String? = savedStateHandle["playlistId"]
 
     private val _cards = MutableStateFlow<List<SongItem>>(emptyList())
     val cards = _cards.asStateFlow()
@@ -41,6 +46,8 @@ class MusicSwiperViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
+    val isPlaylistMatch: Boolean get() = playlistId != null
+
     private val swipedHistory = ArrayDeque<SongItem>()
     private val seenSongIds = mutableSetOf<String>()
 
@@ -50,20 +57,29 @@ class MusicSwiperViewModel @Inject constructor(
 
     fun loadRecommendations() {
         if (_isLoading.value) return
+        // Flip the flag before the coroutine starts so the screen never flashes its empty state first.
+        _isLoading.value = true
         viewModelScope.launch(Dispatchers.IO) {
-            _isLoading.value = true
             try {
                 // 1. Gather seed candidate songs from user's liked and played tracks
                 val likedSongs = database.likedSongsByCreateDateAsc().firstOrNull().orEmpty()
                 val recentSongs = database.mostPlayedSongs(20).firstOrNull().orEmpty()
-                val allTasteSeeds = (likedSongs + recentSongs).distinctBy { it.id }.shuffled()
-                val excludedSongIds = (likedSongs.map { it.id } + recentSongs.map { it.id }).toSet()
+                val playlistSongs = playlistId
+                    ?.let { database.playlistSongs(it).firstOrNull().orEmpty().map { entry -> entry.song } }
+                    .orEmpty()
+                val allTasteSeeds = if (playlistSongs.isNotEmpty()) {
+                    playlistSongs.shuffled()
+                } else {
+                    (likedSongs + recentSongs).distinctBy { it.id }.shuffled()
+                }
+                val excludedSongIds =
+                    (likedSongs.map { it.id } + recentSongs.map { it.id } + playlistSongs.map { it.id }).toSet()
 
                 val newRecommendations = mutableListOf<SongItem>()
 
                 if (allTasteSeeds.isNotEmpty()) {
-                    // Query related/radio recommendations for up to 3 random favorite seeds
-                    for (seed in allTasteSeeds.take(3)) {
+                    // Query related/radio recommendations for up to 4 random seeds
+                    for (seed in allTasteSeeds.take(4)) {
                         val result = YouTube.next(WatchEndpoint(videoId = seed.id)).getOrNull()
                         val items = result?.items.orEmpty()
                         for (item in items) {

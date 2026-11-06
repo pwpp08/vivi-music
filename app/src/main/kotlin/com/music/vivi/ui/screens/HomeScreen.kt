@@ -63,6 +63,9 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.shadow
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -1092,66 +1095,12 @@ fun HomeScreen(
                     }
 
                     item(key = "music_swiper_banner") {
-                        androidx.compose.material3.Surface(
+                        MusicMatchBanner(
                             onClick = { navController.navigate("music_swiper") },
-                            shape = RoundedCornerShape(24.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(48.dp)
-                                        .background(
-                                            brush = Brush.linearGradient(
-                                                listOf(
-                                                    MaterialTheme.colorScheme.primary,
-                                                    MaterialTheme.colorScheme.tertiary
-                                                )
-                                            ),
-                                            shape = CircleShape
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_music_match),
-                                        contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.size(26.dp)
-                                    )
-                                }
-                                Column(
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.swiper_title),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        text = stringResource(R.string.swiper_subtitle),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
-                                    )
-                                }
-                                Icon(
-                                    painter = painterResource(R.drawable.arrow_forward),
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
+                        )
                     }
                 }
 
@@ -2170,5 +2119,133 @@ fun HomeScreen(
                 }
             )
         }
+    }
+}
+
+@Composable
+private fun MusicMatchBanner(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = MaterialTheme.colorScheme
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(28.dp),
+        color = colors.primaryContainer,
+        modifier = modifier,
+    ) {
+        Box(
+            modifier = Modifier
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            colors.primaryContainer,
+                            colors.tertiaryContainer,
+                        )
+                    )
+                )
+                .padding(start = 20.dp, top = 18.dp, bottom = 18.dp, end = 8.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.swiper_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.onPrimaryContainer
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.swiper_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onPrimaryContainer.copy(alpha = 0.75f)
+                    )
+                    Spacer(Modifier.height(14.dp))
+                    Surface(
+                        shape = CircleShape,
+                        color = colors.primary,
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_music_match),
+                                contentDescription = null,
+                                tint = colors.onPrimary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = stringResource(R.string.discover_more),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.onPrimary
+                            )
+                        }
+                    }
+                }
+
+                // Fanned mini cards: pass, song, like.
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(width = 120.dp, height = 104.dp)
+                ) {
+                    MiniSwipeCard(
+                        icon = R.drawable.close,
+                        container = colors.surface.copy(alpha = 0.55f),
+                        tint = colors.onSurfaceVariant,
+                        rotation = -16f,
+                        offsetX = (-30).dp,
+                    )
+                    MiniSwipeCard(
+                        icon = R.drawable.favorite,
+                        container = colors.tertiary,
+                        tint = colors.onTertiary,
+                        rotation = 14f,
+                        offsetX = 30.dp,
+                    )
+                    MiniSwipeCard(
+                        icon = R.drawable.music_note,
+                        container = colors.primary,
+                        tint = colors.onPrimary,
+                        rotation = -2f,
+                        offsetX = 0.dp,
+                        elevated = true,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MiniSwipeCard(
+    icon: Int,
+    container: Color,
+    tint: Color,
+    rotation: Float,
+    offsetX: androidx.compose.ui.unit.Dp,
+    elevated: Boolean = false,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .offset(x = offsetX)
+            .graphicsLayer { rotationZ = rotation }
+            .size(width = 52.dp, height = 74.dp)
+            .shadow(if (elevated) 8.dp else 3.dp, RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(14.dp))
+            .background(container)
+    ) {
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(24.dp)
+        )
     }
 }

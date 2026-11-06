@@ -248,9 +248,7 @@ fun QueueMenu(
                         text = stringResource(R.string.radio),
                         onClick = {
                             onDismiss()
-                            playerConnection.playQueue(
-                                YouTubeQueue.radio(mediaMetadata)
-                            )
+                            playerConnection.startRadio(mediaMetadata)
                         }
                     ),
                     NewAction(

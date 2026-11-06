@@ -1234,6 +1234,14 @@
     <string name="badge_like">LIKE</string>
     <string name="badge_nope">PASS</string>
     <string name="action_expand_player">Expand player</string>
+    <string name="music_match_from_playlist">Music Match</string>
+    <string name="music_match_from_playlist_desc">Swipe through new songs based on this playlist</string>
+    <string name="music_match_analyzing_playlist">Analyzing your playlist</string>
+    <string name="music_match_analyzing_taste">Reading your taste</string>
+    <string name="music_match_step_1">Listening to your songs…</string>
+    <string name="music_match_step_2">Finding what they have in common…</string>
+    <string name="music_match_step_3">Looking for fresh matches…</string>
+    <string name="music_match_step_4">Almost there…</string>
     <string name="swiper_title">Music Match</string>
     <string name="swiper_subtitle">Discover new songs tailored to your taste</string>
     <string name="refresh">Refresh</string>

@@ -57,6 +57,8 @@ class ViviAccessibilityService : AccessibilityService() {
     // The volume key whose press we swallowed on the way down. Its release has to be handled by us as well,
     // even if the screen / player state changed in between (e.g. the player is buffering after the skip).
     private var swallowedVolumeKey = KeyEvent.KEYCODE_UNKNOWN
+    private var volumeHoldStart = 0L
+    private var pendingVolumeRelease: Runnable? = null
 
     // Power button double-press detection.
     // The power key itself is usually not delivered to accessibility services, so the screen turning off and on again is
@@ -249,22 +251,35 @@ class ViviAccessibilityService : AccessibilityService() {
         if (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
             when (event.action) {
                 KeyEvent.ACTION_DOWN -> {
-                    if (event.repeatCount > 0 && swallowedVolumeKey == keyCode) {
-                        // Key repeat while holding. If the timer was late (busy main thread), the hold time on the
-                        // event itself is just as good a clock.
+                    if (swallowedVolumeKey == keyCode) {
+                        // Either a key repeat while holding, or the key coming back down right after a bounce. Pressing
+                        // through fabric often makes the contact open for a few milliseconds mid-hold; that must not
+                        // turn the long press into a volume step.
+                        pendingVolumeRelease?.let {
+                            handler.removeCallbacks(it)
+                            pendingVolumeRelease = null
+                        }
+                        // If the timer was late (busy main thread, or it fired while the key bounced), the time since
+                        // the first press is just as good a clock.
                         if (!isVolumeLongPressTriggered &&
-                            event.eventTime - event.downTime >= LONG_PRESS_TIMEOUT_MS
+                            SystemClock.uptimeMillis() - volumeHoldStart >= LONG_PRESS_TIMEOUT_MS
                         ) {
                             triggerVolumeLongPress(keyCode)
                         }
                         return true
                     }
 
-                    if (screenOffVolumeSkipEnabled && isScreenOff() && MusicService.isPlaybackActive()) {
+                    if (event.repeatCount == 0 && screenOffVolumeSkipEnabled && isInPocketState() &&
+                        MusicService.isPlaybackActive()
+                    ) {
                         swallowedVolumeKey = keyCode
+                        volumeHoldStart = event.downTime
                         isVolumeLongPressTriggered = false
                         cancelVolumeLongPress()
-                        val runnable = Runnable { triggerVolumeLongPress(keyCode) }
+                        val runnable = Runnable {
+                            // Only skip while the key is actually down, not during a pending release.
+                            if (pendingVolumeRelease == null) triggerVolumeLongPress(keyCode)
+                        }
                         volumeLongPressRunnable = runnable
                         handler.postDelayed(runnable, LONG_PRESS_TIMEOUT_MS)
                         return true // Consume to prevent volume change during initial press
@@ -273,13 +288,20 @@ class ViviAccessibilityService : AccessibilityService() {
 
                 KeyEvent.ACTION_UP -> {
                     if (swallowedVolumeKey == keyCode) {
-                        swallowedVolumeKey = KeyEvent.KEYCODE_UNKNOWN
-                        cancelVolumeLongPress()
-                        val longPressHandled = isVolumeLongPressTriggered
-                        isVolumeLongPressTriggered = false
-                        if (!longPressHandled) {
-                            // Short click released before the threshold: adjust volume by 1 step normally
-                            adjustVolumeOneStep(keyCode)
+                        if (isVolumeLongPressTriggered) {
+                            finishVolumePress()
+                        } else {
+                            // Wait a moment before treating this as a short click: if the key comes back down within
+                            // the grace period it was a bounce and the hold continues.
+                            pendingVolumeRelease?.let { handler.removeCallbacks(it) }
+                            val release = Runnable {
+                                pendingVolumeRelease = null
+                                val longPressHandled = isVolumeLongPressTriggered
+                                finishVolumePress()
+                                if (!longPressHandled) adjustVolumeOneStep(keyCode)
+                            }
+                            pendingVolumeRelease = release
+                            handler.postDelayed(release, RELEASE_GRACE_MS)
                         }
                         // Always consume the release of a press we swallowed, so the system never sees a lone "up".
                         return true
@@ -294,6 +316,23 @@ class ViviAccessibilityService : AccessibilityService() {
     private fun isScreenOff(): Boolean {
         val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
         return powerManager?.isInteractive == false
+    }
+
+    // In a pocket the screen is usually off, but a notification or the proximity-less lift-to-wake can light up the
+    // lock screen for a few seconds. Treat an untouched lock screen the same way so the gesture keeps working.
+    private fun isInPocketState(): Boolean {
+        if (isScreenOff()) return true
+        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
+        return keyguardManager?.isKeyguardLocked == true &&
+            SystemClock.uptimeMillis() - lastScreenTouchTime > POCKET_TOUCH_GUARD_MS
+    }
+
+    private fun finishVolumePress() {
+        swallowedVolumeKey = KeyEvent.KEYCODE_UNKNOWN
+        cancelVolumeLongPress()
+        pendingVolumeRelease?.let { handler.removeCallbacks(it) }
+        pendingVolumeRelease = null
+        isVolumeLongPressTriggered = false
     }
 
     private fun cancelVolumeLongPress() {
@@ -489,7 +528,7 @@ class ViviAccessibilityService : AccessibilityService() {
         } catch (e: Exception) {
             // Ignore
         }
-        cancelVolumeLongPress()
+        finishVolumePress()
         serviceScope.cancel()
         super.onDestroy()
     }
@@ -497,6 +536,8 @@ class ViviAccessibilityService : AccessibilityService() {
     companion object {
         private const val TAG = "ViviAccessibility"
         private const val LONG_PRESS_TIMEOUT_MS = 500L
+        private const val RELEASE_GRACE_MS = 150L
+        private const val POCKET_TOUCH_GUARD_MS = 4000L
         private const val TOUCH_GUARD_MS = 300L
         private const val CAMERA_LAUNCH_DEBOUNCE_MS = 2000L
 

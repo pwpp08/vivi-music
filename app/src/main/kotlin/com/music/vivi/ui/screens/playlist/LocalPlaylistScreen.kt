@@ -577,6 +577,7 @@ fun LocalPlaylistScreen(
                                 onshowDeletePlaylistDialog = { showDeletePlaylistDialog = true },
                                 onShowAddSongsDialog = { showAddSongsDialog = true },
                                 onScanDuplicates = { showScanDuplicatesDialog = true },
+                                onMusicMatch = { navController.navigate("music_swiper?playlistId=${playlist.id}") },
                                 onStartSearch = { isSearching = true },
                                 snackbarHostState = snackbarHostState,
                                 modifier = Modifier.animateItem()
@@ -966,6 +967,7 @@ fun LocalPlaylistHeader(
     snackbarHostState: SnackbarHostState,
     modifier: Modifier,
     onScanDuplicates: (() -> Unit)? = null,
+    onMusicMatch: (() -> Unit)? = null,
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
     val context = LocalContext.current
@@ -1159,7 +1161,6 @@ fun LocalPlaylistHeader(
                             playlistId = playlist.id,
                         )
                     )
-                    playerBottomSheetState?.expandSoft()
                 },
                 onDismiss = {
                     showSpinWheel = false
@@ -1465,6 +1466,7 @@ fun LocalPlaylistHeader(
                             onEdit = onShowEditDialog,
                             onAddSongs = onShowAddSongsDialog,
                             onScanDuplicates = onScanDuplicates,
+                            onMusicMatch = onMusicMatch,
                             onSync = {
                                 scope.launch(Dispatchers.IO) {
                                     if (playlist.playlist.browseId != null) {

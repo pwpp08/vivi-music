@@ -43,6 +43,7 @@ fun LocalPlaylistMenu(
     onDismiss: () -> Unit,
     onAddSongs: (() -> Unit)? = null,
     onScanDuplicates: (() -> Unit)? = null,
+    onMusicMatch: (() -> Unit)? = null,
 ) {
     val listenTogetherManager = LocalListenTogetherManager.current
     val downloadUtil = LocalDownloadUtil.current
@@ -145,6 +146,25 @@ fun LocalPlaylistMenu(
                     },
                     onClick = {
                         onScanDuplicates()
+                        onDismiss()
+                    }
+                )
+            )
+        }
+
+        if (onMusicMatch != null && songs.isNotEmpty()) {
+            add(
+                Material3MenuItemData(
+                    title = { Text(stringResource(R.string.music_match_from_playlist)) },
+                    description = { Text(stringResource(R.string.music_match_from_playlist_desc)) },
+                    icon = {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_music_match),
+                            contentDescription = null
+                        )
+                    },
+                    onClick = {
+                        onMusicMatch()
                         onDismiss()
                     }
                 )

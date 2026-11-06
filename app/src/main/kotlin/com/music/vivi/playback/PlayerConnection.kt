@@ -230,6 +230,18 @@ class PlayerConnection(
         }
     }
 
+    /**
+     * Starts a radio based on [metadata]. If that song is already playing it keeps playing from where it is and the
+     * radio is queued after it, instead of restarting the song.
+     */
+    fun startRadio(metadata: com.music.vivi.models.MediaMetadata) {
+        if (player.currentMediaItem?.mediaId == metadata.id) {
+            startRadioSeamlessly()
+        } else {
+            playQueue(com.music.vivi.playback.queues.YouTubeQueue.radio(metadata))
+        }
+    }
+
     fun prefetchSong(mediaId: String) {
         try {
             service.prefetchSong(mediaId)

@@ -645,7 +645,6 @@ private fun OnlinePlaylistHeader(
                                 startIndex = index,
                             )
                         )
-                        playerBottomSheetState?.expandSoft()
                     },
                     onDismiss = {
                         showSpinWheel = false
