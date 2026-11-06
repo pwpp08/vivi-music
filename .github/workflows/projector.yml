@@ -3,7 +3,7 @@ name: Projector + FOSS Build
 on:
   workflow_dispatch:
   push:
-    branches: [ projector ]
+    branches: [ 32-bit-projector ]
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
