@@ -27,7 +27,7 @@ import java.net.URL
 object ProjectorSyncUtils {
     suspend fun pushToProjector(context: Context, host: String, port: Int, code: String): Boolean =
         withContext(Dispatchers.IO) {
-            val ok = try {
+            val error: String? = try {
                 val prefs: Preferences = context.dataStore.data.first()
                 val payload = JSONObject().apply {
                     put("cookie", prefs[InnerTubeCookieKey].orEmpty())
@@ -48,20 +48,24 @@ object ProjectorSyncUtils {
                     conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
                     conn.setRequestProperty("X-Code", code)
                     conn.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
-                    conn.responseCode == 200
+                    when (val code = conn.responseCode) {
+                        200 -> null
+                        403 -> "Wrong or expired code. Reopen the Account tab on the projector and scan again."
+                        else -> "Projector answered HTTP $code"
+                    }
                 } finally {
                     conn.disconnect()
                 }
             } catch (e: Exception) {
-                false
+                "Could not reach projector (${e.javaClass.simpleName}: ${e.message}). Same Wi-Fi?"
             }
             withContext(Dispatchers.Main) {
                 Toast.makeText(
                     context,
-                    if (ok) "Settings sent to projector" else "Could not reach projector (same Wi-Fi? code correct?)",
+                    error ?: "Settings sent to projector",
                     Toast.LENGTH_LONG,
                 ).show()
             }
-            ok
+            error == null
         }
 }

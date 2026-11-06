@@ -70,7 +70,7 @@ fun <T> rememberLoad(key: Any?, block: suspend () -> Result<T>): Load<T> {
 fun Modifier.focusHighlight(shape: Shape = RoundedCornerShape(14.dp)): Modifier {
     var focused by remember { mutableStateOf(false) }
     return this
-        .then(if (focused) Modifier.border(3.dp, ViviRed, shape) else Modifier)
+        .then(if (focused) Modifier.border(3.dp, ViviAccent, shape) else Modifier)
         .onFocusChanged { focused = it.isFocused }
 }
 
@@ -172,9 +172,14 @@ fun RoundIcon(icon: ImageVector, label: String, size: Dp = 56.dp, filled: Boolea
             .size(size)
             .focusHighlight(CircleShape)
             .clip(CircleShape)
-            .then(if (filled) Modifier.background(ViviRed) else Modifier),
+            .then(if (filled) Modifier.background(ViviAccent) else Modifier),
     ) {
-        Icon(icon, contentDescription = label, modifier = Modifier.size(size * 0.55f))
+        Icon(
+            icon,
+            contentDescription = label,
+            tint = if (filled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(size * 0.55f),
+        )
     }
 }
 
@@ -182,7 +187,7 @@ fun RoundIcon(icon: ImageVector, label: String, size: Dp = 56.dp, filled: Boolea
 fun LoadingOrError(state: Load<*>, modifier: Modifier = Modifier) {
     Box(modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) {
         when (state) {
-            is Load.Loading -> CircularProgressIndicator(color = ViviRed)
+            is Load.Loading -> CircularProgressIndicator(color = ViviAccent)
             is Load.Fail -> Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Couldn't load", style = MaterialTheme.typography.titleLarge)
                 Text(state.message, color = MaterialTheme.colorScheme.onSurfaceVariant)

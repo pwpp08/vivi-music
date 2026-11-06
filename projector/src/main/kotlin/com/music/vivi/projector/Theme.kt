@@ -9,21 +9,26 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-/** Same accent as the phone app. */
-val ViviRed = Color(0xFFED5564)
+/** Accent taken from the phone app's green palette. */
+val ViviAccent = Color(0xFFB7CF9E)
 
 private val Colors = darkColorScheme(
-    primary = ViviRed,
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFF5C1B24),
-    onPrimaryContainer = Color(0xFFFFDADD),
-    background = Color(0xFF0E0E12),
-    onBackground = Color(0xFFEDEDF0),
-    surface = Color(0xFF16161C),
-    onSurface = Color(0xFFEDEDF0),
-    surfaceVariant = Color(0xFF22222B),
-    onSurfaceVariant = Color(0xFFB4B4BE),
-    outline = Color(0xFF55555F),
+    primary = Color(0xFFB7CF9E),
+    onPrimary = Color(0xFF223514),
+    primaryContainer = Color(0xFF3A4C2E),
+    onPrimaryContainer = Color(0xFFD3EBB8),
+    secondary = Color(0xFFBFCBAD),
+    onSecondary = Color(0xFF2A3420),
+    secondaryContainer = Color(0xFF3F4A34),
+    onSecondaryContainer = Color(0xFFDBE7C8),
+    tertiary = Color(0xFFFFF8E6),
+    background = Color(0xFF0C100B),
+    onBackground = Color(0xFFE2E4D8),
+    surface = Color(0xFF151A13),
+    onSurface = Color(0xFFE2E4D8),
+    surfaceVariant = Color(0xFF1F251C),
+    onSurfaceVariant = Color(0xFFC3C9B6),
+    outline = Color(0xFF8D9382),
 )
 
 // Sizes are a step up from phone defaults because this is read from across a room.

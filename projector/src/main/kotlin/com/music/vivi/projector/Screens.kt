@@ -171,7 +171,7 @@ private fun HomeScreen(syncVersion: Int, onItem: (YTItem, List<YTItem>) -> Unit)
         return
     }
     LazyColumn(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-        item { Text("Vivi", style = MaterialTheme.typography.headlineLarge, color = ViviRed) }
+        item { Text("Vivi", style = MaterialTheme.typography.headlineLarge, color = ViviAccent) }
         items(state.value.sections.filter { s -> s.items.any { it !is com.music.innertube.models.ArtistItem } }) { section ->
             val entries = section.items.filter { it !is com.music.innertube.models.ArtistItem }
             Column {
@@ -277,10 +277,10 @@ private fun DetailScreen(target: DetailTarget, onItem: (YTItem, List<YTItem>) ->
                                 .focusRequester(playFocus)
                                 .focusHighlight(RoundedCornerShape(24.dp))
                                 .clip(RoundedCornerShape(24.dp))
-                                .background(ViviRed)
+                                .background(ViviAccent)
                                 .clickable { PlayerController.playQueue(state.value, 0) }
                                 .padding(horizontal = 28.dp, vertical = 12.dp),
-                        ) { Text("Play all", style = MaterialTheme.typography.labelLarge, color = Color.White) }
+                        ) { Text("Play all", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimary) }
                     }
                 }
             }
@@ -331,7 +331,7 @@ private fun SyncScreen(settings: Settings, onSynced: () -> Unit) {
             Text("1. Install Vivi on your phone and sign in.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text("2. Scan the code with the phone camera.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text("3. Done. The projector keeps the login by itself.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (ip == null) Text("Connect the projector to Wi-Fi first.", color = ViviRed)
+            if (ip == null) Text("Connect the projector to Wi-Fi first.", color = ViviAccent)
         }
         Spacer(Modifier.width(48.dp))
         link?.let {
@@ -350,7 +350,7 @@ private fun MiniPlayer(onOpen: () -> Unit) {
     val song = PlayerController.current ?: return
     Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
         val progress = if (PlayerController.durationMs > 0) PlayerController.positionMs / PlayerController.durationMs.toFloat() else 0f
-        LinearProgressIndicator(progress = { progress.coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth(), color = ViviRed)
+        LinearProgressIndicator(progress = { progress.coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth(), color = ViviAccent)
         Row(Modifier.padding(horizontal = 24.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Row(
                 Modifier
@@ -389,7 +389,7 @@ private fun NowPlaying(onClose: () -> Unit) {
     Box(
         Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(Color(0xFF3A1218), MaterialTheme.colorScheme.background))),
+            .background(Brush.verticalGradient(listOf(Color(0xFF23311B), MaterialTheme.colorScheme.background))),
     ) {
         Row(Modifier.fillMaxSize().padding(48.dp), verticalAlignment = Alignment.CenterVertically) {
             Art(hiRes(song.thumbnail), 420.dp, shape = RoundedCornerShape(24.dp))
@@ -415,7 +415,7 @@ private fun NowPlaying(onClose: () -> Unit) {
                         .focusable()
                         .padding(8.dp),
                 ) {
-                    LinearProgressIndicator(progress = { progress.coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth().height(8.dp), color = ViviRed)
+                    LinearProgressIndicator(progress = { progress.coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth().height(8.dp), color = ViviAccent)
                     Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(formatTime(PlayerController.positionMs), color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text("Left / Right to seek 10s", color = MaterialTheme.colorScheme.outline)
