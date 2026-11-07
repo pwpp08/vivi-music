@@ -1,0 +1,26 @@
+Trackhop
+Copyright (C) 2026 xlollx and contributors
+https://github.com/xlollx/Trackhop
+
+Trackhop is free software under the GNU Affero General Public License, version 3 only
+(AGPL-3.0-only), see LICENSE.
+
+Additional terms under section 7 of the license
+------------------------------------------------
+
+1. Author attribution (section 7(b)). Every copy or modified version of Trackhop, in source or
+   object form (an APK, a desktop package, a container image), must keep the author attribution
+
+       Trackhop by xlollx · AGPL-3.0 · github.com/xlollx/Trackhop
+
+   where the program shows it: in the app, under Settings › About › "Source code and
+   documentation"; in the web page of Trackhop Desktop and the Trackhop server, in the page
+   footer. A modified version may show it as "Based on Trackhop by xlollx" with the same link,
+   and must also state that it was modified and by whom (section 5(a) of the license).
+
+2. Names (section 7(c) and 7(e)). The name "Trackhop" (and "Songport", its former name) is not
+   licensed: it identifies this project's official releases. A modified version that is
+   distributed must use a name of its own, and no modified version may present itself as an
+   official Trackhop release.
+
+These terms apply to the releases from app 1.7.0 and server 1.1.0 on.

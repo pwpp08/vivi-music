@@ -5,6 +5,12 @@
 
 package com.music.vivi
 
+import coil3.transition.Transition
+import coil3.transition.CrossfadeTransition
+import coil3.request.transitionFactory
+import coil3.request.SuccessResult
+import com.music.vivi.utils.LibraryMemoryCache
+import com.music.vivi.db.MusicDatabase
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -26,7 +32,6 @@ import coil3.intercept.Interceptor
 import coil3.request.ImageResult
 import coil3.request.Options
 import coil3.request.allowHardware
-import coil3.request.crossfade
 import coil3.asImage
 import coil3.decode.DataSource
 import android.graphics.Bitmap
@@ -80,6 +85,9 @@ class App : Application(), SingletonImageLoader.Factory {
     @ApplicationScope
     lateinit var applicationScope: CoroutineScope
 
+    @Inject
+    lateinit var database: dagger.Lazy<MusicDatabase>
+
     override fun onCreate() {
         super.onCreate()
         context = this
@@ -98,10 +106,21 @@ class App : Application(), SingletonImageLoader.Factory {
 
         Timber.plant(Timber.DebugTree())
 
+        // Playlist sync (vendored Trackhop): its screens wear Vivi's theme, its engine starts with the app.
+        com.xlollx.songport.ui.HostTheme.wrap = { content -> com.music.vivi.ui.theme.PlaylistSyncTheme(content) }
+        runCatching { com.xlollx.songport.SongportInit.init(this) }
+            .onFailure { Timber.e(it, "Playlist sync init failed") }
+
         // تهيئة إعدادات التطبيق عند الإقلاع
         applicationScope.launch {
             initializeSettings()
             observeSettingsChanges()
+        }
+
+        // Load the library before the first frame asks for it
+        applicationScope.launch(Dispatchers.IO) {
+            runCatching { LibraryMemoryCache.preload(this@App, database.get()) }
+                .onFailure { Timber.w(it, "Library preload failed") }
         }
 
         // Prewarm stream extractor, PoToken WebView, and cipher deobfuscator in background
@@ -293,7 +312,17 @@ class App : Application(), SingletonImageLoader.Factory {
             dataStore.data.map { it[MaxImageCacheSizeKey] ?: 512 }.first()
         }
         return ImageLoader.Builder(this).apply {
-            crossfade(true)
+            // Only fade covers that really came over the network; ones already on disk appear at once
+            val networkFade = CrossfadeTransition.Factory()
+            transitionFactory(
+                Transition.Factory { target, result ->
+                    if (result is SuccessResult && result.dataSource == DataSource.NETWORK) {
+                        networkFade.create(target, result)
+                    } else {
+                        Transition.Factory.NONE.create(target, result)
+                    }
+                }
+            )
             allowHardware(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
             components {
                 add(ThumbnailDiskCacheInterceptor())

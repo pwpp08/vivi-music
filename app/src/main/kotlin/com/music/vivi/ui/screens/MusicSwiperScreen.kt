@@ -5,6 +5,9 @@
 
 package com.music.vivi.ui.screens
 
+import androidx.media3.common.C
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.material3.Slider
 import android.view.HapticFeedbackConstants
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -337,10 +340,17 @@ fun MusicSwiperScreen(
 
             // Bottom Action Controls (positioned comfortably above the song bar)
             if (cards.isNotEmpty() && currentTopCard != null) {
+                CardScrubber(
+                    card = currentTopCard,
+                    isCurrentCard = currentMediaMetadata?.id == currentTopCard.id,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 28.dp, end = 28.dp, top = 6.dp),
+                )
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 10.dp),
+                        .padding(start = 24.dp, end = 24.dp, top = 6.dp, bottom = 22.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -462,6 +472,81 @@ fun MusicSwiperScreen(
                 Spacer(Modifier.height(80.dp))
             }
         }
+    }
+}
+
+/** Scrubs the song on the top card. It only moves and seeks while that card is the one playing. */
+@Composable
+private fun CardScrubber(
+    card: SongItem,
+    isCurrentCard: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val playerConnection = LocalPlayerConnection.current ?: return
+    val listenTogetherManager = com.music.vivi.LocalListenTogetherManager.current
+    val isGuest = listenTogetherManager?.isInRoom == true && !listenTogetherManager.isHost
+    val castHandler = remember(playerConnection) {
+        try {
+            playerConnection.service.castConnectionHandler
+        } catch (_: Exception) {
+            null
+        }
+    }
+    val isCasting by castHandler?.isCasting?.collectAsState() ?: remember { mutableStateOf(false) }
+    val castPosition by castHandler?.castPosition?.collectAsState() ?: remember { mutableLongStateOf(0L) }
+
+    val cardDurationMs = (card.duration ?: 0) * 1000L
+    var positionMs by remember(card.id) { mutableLongStateOf(0L) }
+    var durationMs by remember(card.id) { mutableLongStateOf(cardDurationMs) }
+    var scrubMs by remember(card.id) { mutableStateOf<Long?>(null) }
+
+    LaunchedEffect(card.id, isCurrentCard) {
+        if (!isCurrentCard) {
+            positionMs = 0L
+            return@LaunchedEffect
+        }
+        while (true) {
+            val player = playerConnection.player
+            positionMs = player.currentPosition
+            if (player.duration != C.TIME_UNSET && player.duration > 0) durationMs = player.duration
+            kotlinx.coroutines.delay(250)
+        }
+    }
+
+    val shownMs = scrubMs ?: if (isCurrentCard && isCasting) castPosition else positionMs
+    val maxMs = durationMs.coerceAtLeast(1L)
+
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text(
+            text = makeTimeString(shownMs),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Slider(
+            value = shownMs.coerceIn(0L, maxMs).toFloat(),
+            valueRange = 0f..maxMs.toFloat(),
+            enabled = isCurrentCard && !isGuest,
+            onValueChange = { scrubMs = it.toLong() },
+            onValueChangeFinished = {
+                scrubMs?.let { target ->
+                    if (isCasting) castHandler?.seekTo(target) else playerConnection.player.seekTo(target)
+                    positionMs = target
+                }
+                scrubMs = null
+            },
+            modifier = Modifier
+                .weight(1f)
+                .height(32.dp),
+        )
+        Text(
+            text = makeTimeString(durationMs),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

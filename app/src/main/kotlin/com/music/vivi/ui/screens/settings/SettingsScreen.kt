@@ -255,6 +255,18 @@ fun SettingsScreen(
                     )
                     add(
                         Material3SettingsItem(
+                            icon = painterResource(R.drawable.sync),
+                            title = { Text(stringResource(R.string.playlist_sync)) },
+                            description = { Text(stringResource(R.string.playlist_sync_desc)) },
+                            onClick = {
+                                context.startActivity(
+                                    android.content.Intent(context, com.xlollx.songport.MainActivity::class.java)
+                                )
+                            }
+                        )
+                    )
+                    add(
+                        Material3SettingsItem(
                             icon = painterResource(R.drawable.group),
                             title = { Text(stringResource(R.string.listen_together)) },
                             description = { Text(stringResource(R.string.setting_listen_together_desc)) },

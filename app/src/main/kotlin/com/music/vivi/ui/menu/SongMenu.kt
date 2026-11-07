@@ -5,6 +5,8 @@
 
 package com.music.vivi.ui.menu
 
+import com.music.vivi.utils.rememberHeartRouter
+import com.music.vivi.utils.rememberHearted
 import android.content.Intent
 import android.content.res.Configuration
 import androidx.compose.animation.core.animateFloatAsState
@@ -122,6 +124,7 @@ fun SongMenu(
         .collectAsState(initial = null)
     val coroutineScope = rememberCoroutineScope()
     val syncUtils = LocalSyncUtils.current
+    val heartRouter = rememberHeartRouter()
     val listenTogetherManager = LocalListenTogetherManager.current
     val scope = rememberCoroutineScope()
     var refetchIconDegree by remember { mutableFloatStateOf(0f) }
@@ -313,16 +316,19 @@ fun SongMenu(
         trailingContent = {
             IconButton(
                 onClick = {
-                    val s = song.song.toggleLike()
-                    database.query {
-                        update(s)
+                    heartRouter.toggle(song.toMediaMetadata()) {
+                        val s = song.song.toggleLike()
+                        database.query {
+                            update(s)
+                        }
+                        syncUtils.likeSong(s)
                     }
-                    syncUtils.likeSong(s)
                 },
             ) {
+                val hearted = rememberHearted(song.id, song.song.liked)
                 Icon(
-                    painter = painterResource(if (song.song.liked) R.drawable.favorite else R.drawable.favorite_border),
-                    tint = if (song.song.liked) MaterialTheme.colorScheme.error else LocalContentColor.current,
+                    painter = painterResource(if (hearted) R.drawable.favorite else R.drawable.favorite_border),
+                    tint = if (hearted) MaterialTheme.colorScheme.error else LocalContentColor.current,
                     contentDescription = null,
                 )
             }

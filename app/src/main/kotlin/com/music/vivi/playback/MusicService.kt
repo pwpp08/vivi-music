@@ -7,6 +7,8 @@
 
 package com.music.vivi.playback
 
+import kotlinx.coroutines.flow.flowOf
+import com.music.vivi.utils.HeartRouter
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -250,6 +252,9 @@ class MusicService :
     lateinit var syncUtils: SyncUtils
 
     @Inject
+    lateinit var heartRouter: HeartRouter
+
+    @Inject
     lateinit var mediaLibrarySessionCallback: MediaLibrarySessionCallback
 
     @Inject
@@ -318,6 +323,11 @@ class MusicService :
             .flatMapLatest { mediaMetadata ->
                 database.song(mediaMetadata?.id)
             }.stateIn(scope, SharingStarted.Lazily, null)
+    private val currentHearted =
+        currentMediaMetadata
+            .flatMapLatest { mediaMetadata ->
+                mediaMetadata?.let { heartRouter.isHearted(it.id) } ?: flowOf(false)
+            }.stateIn(scope, SharingStarted.Lazily, false)
     private val currentFormat =
         currentMediaMetadata.flatMapLatest { mediaMetadata ->
             database.format(mediaMetadata?.id)
@@ -850,6 +860,8 @@ class MusicService :
                 settings[PlayerVolumeKey] = volume
             }
         }
+
+        currentHearted.debounce(1000).collect(scope) { updateNotification() }
 
         currentSong.debounce(1000).collect(scope) { song ->
             updateNotification()
@@ -1461,16 +1473,14 @@ class MusicService :
                     .Builder()
                     .setDisplayName(
                         getString(
-                            if (currentSong.value?.song?.liked ==
-                                true
-                            ) {
+                            if (currentHearted.value) {
                                 R.string.action_remove_like
                             } else {
                                 R.string.action_like
                             },
                         ),
                     )
-                    .setIconResId(if (currentSong.value?.song?.liked == true) R.drawable.ic_heart else R.drawable.ic_heart_outline)
+                    .setIconResId(if (currentHearted.value) R.drawable.ic_heart else R.drawable.ic_heart_outline)
                     .setSessionCommand(CommandToggleLike)
                     .setEnabled(currentSong.value != null)
                     .build(),
@@ -2009,6 +2019,7 @@ class MusicService :
         scope.launch {
             val songToToggle = currentSong.first()
             songToToggle?.let {
+                if (heartRouter.toggleIfRouted(it.toMediaMetadata())) return@launch
                 val song = it.song.toggleLike()
                 database.query {
                     update(song)
@@ -3714,7 +3725,7 @@ class MusicService :
                 val song = songData?.song
                 val songTitle = song?.title ?: getString(R.string.no_song_playing)
                 val artistName = songData?.artists?.joinToString(", ") { it.name } ?: getString(R.string.tap_to_open)
-                val isLiked = songData?.song?.liked == true
+                val isLiked = currentHearted.value
 
                 widgetManager.updateWidgets(
                     title = songTitle,

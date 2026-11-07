@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The engine (android/core) names strings instead of using R ids: the resource shrinker cannot see
+     those uses, so every string and string array is kept. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@string/th_*,@array/th_*,@plurals/th_*" />

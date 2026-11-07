@@ -5,6 +5,7 @@
 
 package com.music.vivi.ui.player
 
+import com.music.vivi.utils.rememberHearted
 import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -258,6 +259,7 @@ fun Queue(
     val currentWindowIndex by playerConnection.currentWindowIndex.collectAsState()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val currentSong by playerConnection.currentSong.collectAsState(initial = null)
+    val isHearted = rememberHearted(currentSong?.song?.id, currentSong?.song?.liked == true)
     val shuffleModeEnabled by playerConnection.shuffleModeEnabled.collectAsState()
 
     val currentFormat by playerConnection.currentFormat.collectAsState(initial = null)
@@ -391,7 +393,7 @@ fun Queue(
                 showMusicVideo = true
             }
             val shuffleModeEnabledInside by playerConnection.shuffleModeEnabled.collectAsState()
-            val isLiked = currentSong?.song?.liked == true
+            val isLiked = isHearted
             val isSongDownloaded = currentSong?.song?.isDownloaded == true || downloadItem?.state == Download.STATE_COMPLETED
 
             val leadingShapeTop = ButtonGroupDefaults.connectedLeadingButtonShape
@@ -460,9 +462,7 @@ fun Queue(
                         PlayerActionButton.SHUFFLE -> playerConnection.player.shuffleModeEnabled = !shuffleModeEnabledInside
                         PlayerActionButton.REPEAT -> playerConnection.player.toggleRepeatMode()
                         PlayerActionButton.LIKE -> {
-                            database.query {
-                                mediaMetadata?.let { update(it.toSongEntity().toggleLike()) }
-                            }
+                            playerConnection.toggleLike()
                         }
                         PlayerActionButton.DOWNLOAD -> {
                             mediaMetadata?.let { song ->
@@ -602,9 +602,7 @@ fun Queue(
                         PlayerActionButton.SHUFFLE -> playerConnection.player.shuffleModeEnabled = !shuffleModeEnabledInside
                         PlayerActionButton.REPEAT -> playerConnection.player.toggleRepeatMode()
                         PlayerActionButton.LIKE -> {
-                            database.query {
-                                mediaMetadata?.let { update(it.toSongEntity().toggleLike()) }
-                            }
+                            playerConnection.toggleLike()
                         }
                         PlayerActionButton.DOWNLOAD -> {
                             mediaMetadata?.let { song ->
@@ -986,11 +984,11 @@ fun Queue(
                         ) {
                             Icon(
                                 painter = painterResource(
-                                    if (currentSong?.song?.liked == true) R.drawable.favorite
+                                    if (isHearted) R.drawable.favorite
                                     else R.drawable.favorite_border
                                 ),
                                 contentDescription = likeDescription,
-                                tint = if (currentSong?.song?.liked == true) MaterialTheme.colorScheme.error else LocalContentColor.current
+                                tint = if (isHearted) MaterialTheme.colorScheme.error else LocalContentColor.current
                             )
                         }
                     }

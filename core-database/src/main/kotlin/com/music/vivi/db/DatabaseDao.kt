@@ -1044,6 +1044,18 @@ interface DatabaseDao {
         songId: String,
     ): Int
 
+    @Query("SELECT EXISTS(SELECT 1 FROM playlist_song_map WHERE playlistId = :playlistId AND songId = :songId)")
+    fun isSongInPlaylist(
+        playlistId: String,
+        songId: String,
+    ): Flow<Boolean>
+
+    @Query("SELECT * FROM playlist_song_map WHERE playlistId = :playlistId AND songId = :songId")
+    fun playlistSongMapsOf(
+        playlistId: String,
+        songId: String,
+    ): List<PlaylistSongMap>
+
     @Query("SELECT songId from playlist_song_map WHERE playlistId = :playlistId AND songId IN (:songIds)")
     fun playlistDuplicates(
         playlistId: String,

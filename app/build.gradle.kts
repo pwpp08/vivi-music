@@ -314,6 +314,7 @@ dependencies {
     implementation(project(":jiosaavn"))
     implementation(project(":spotify"))
     implementation(project(":lyricsProvider"))
+    implementation(project(":trackhop-app"))
 
 
 

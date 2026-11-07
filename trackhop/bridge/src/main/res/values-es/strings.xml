@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Texts of the built-in web connectors. The bridge_ prefix keeps them apart from Vivi's own. -->
+<resources>
+    <string name="th_bridge_amazon_capture_intro">Usa Amazon Music con normalidad aquí: abre Biblioteca → Playlists, abre una de tus playlists, crea una playlist, añádele una canción, quítala y busca una canción. Cada llamada que hace el reproductor se escribe en un archivo en este teléfono, sin cookies ni tokens. Luego toca Compartir y envía el archivo al desarrollador.</string>
+    <string name="th_bridge_amazon_capture_share">Compartir</string>
+    <string name="th_bridge_amazon_capture_clear">Vaciar</string>
+    <string name="th_bridge_amazon_capture_count">%1$d llamadas capturadas</string>
+    <string name="th_bridge_disclaimer_title">Aviso legal</string>
+    <string name="th_bridge_disclaimer_body">Los conectores web de Vivi (YouTube Music, Amazon Music, SoundCloud y el inicio de sesión web de Spotify, Apple Music y Deezer) forman parte de un proyecto independiente y de código abierto, sin afiliación, respaldo ni relación alguna con Google, YouTube, Amazon, Spotify, Apple, Deezer, SoundCloud ni ningún servicio de música.\n\nSe comunican con estos servicios a través de las mismas interfaces que usan sus propios reproductores web, no mediante una API oficial. Esto va en contra de sus términos de servicio. Pueden dejar de funcionar en cualquier momento, y el servicio puede limitar, suspender o cerrar la cuenta con la que inicies sesión.\n\nEl software se proporciona \"tal cual\", sin garantía de ningún tipo. Al continuar, aceptas que lo usas bajo tu entera responsabilidad y que el desarrollador no asume ninguna responsabilidad por cualquier consecuencia, incluidas restricciones en tus cuentas o pérdida de datos.</string>
+    <string name="th_bridge_disclaimer_accept">Lo entiendo y acepto</string>
+    <string name="th_bridge_login_hint">Inicia sesión en la página del servicio. Esta pantalla se cierra sola; si no lo hace, toca Listo.</string>
+    <string name="th_bridge_login_finishing">Casi listo: el reproductor se está iniciando; deja esta pantalla abierta hasta que se cierre sola. Si el reproductor pregunta quién está escuchando, elige tu perfil.</string>
+    <string name="th_bridge_login_done">Listo</string>
+    <string name="th_bridge_login_not_signed_in">Aún no hay sesión: primero completa el inicio de sesión en esta página.</string>
+    <string name="th_bridge_login_stay">Quedarme</string>
+    <string name="th_bridge_login_leave">Salir</string>
+    <string name="th_bridge_login_blocked">%1$s ha bloqueado este inicio de sesión como actividad inusual. Espera un rato y vuelve a intentarlo, mejor con wifi y sin VPN; si aparece un rompecabezas, resuélvelo.</string>
+    <string name="th_bridge_language_system">Idioma del sistema</string>
+    <string name="th_bridge_verify_hint">Google ha bloqueado esta dirección de red por tráfico inusual. El bloqueo se levanta solo unos minutos después de que paren las solicitudes: Vivi pausa todas las llamadas a YouTube Music durante el tiempo que indique Google. Si la página de Google ofrece una verificación, completarla aquí levanta el bloqueo al momento.</string>
+    <string name="th_bridge_login_title">Iniciar sesión en YouTube Music</string>
+    <string name="th_bridge_amazon_title">Amazon Music (experimental)</string>
+    <string name="th_bridge_amazon_capture">Capturar tráfico</string>
+    <string name="th_bridge_verify_google">Qué dice Google</string>
+    <string name="th_bridge_capture_site_intro">Usa %1$s con normalidad aquí: inicia sesión, abre una playlist, busca una canción, crea una playlist de prueba, añade una canción, quítala, renombra y borra la playlist. Cada llamada a %1$s se escribe en un archivo de este teléfono, sin cookies, tokens ni contraseñas. Luego toca Compartir y envía el archivo al desarrollador.</string>
+    <string name="th_bridge_capture_warning_title">Esta pantalla graba</string>
+    <string name="th_bridge_capture_warning_body">Lo que haces en este sitio se escribe en un archivo de este teléfono (sin contraseñas, correos ni tokens). Comparte el archivo solo con el desarrollador, nunca en una issue pública. Se borra solo al cabo de un día.</string>
+    <string name="th_bridge_capture_delete_title">¿Borrar la captura?</string>
+    <string name="th_bridge_capture_delete_body">El archivo se queda en este teléfono un día, salvo que lo borres ahora.</string>
+    <string name="th_bridge_capture_delete">Borrar</string>
+    <string name="th_bridge_capture_keep">Conservar</string>
+    <string name="th_bridge_page_crashed">La página dejó de funcionar y se cerró. Inténtalo de nuevo.</string>
+</resources>

@@ -7,6 +7,7 @@
 
 package com.music.vivi.ui.player
 
+import com.music.vivi.utils.rememberHearted
 import android.content.res.Configuration
 import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
@@ -956,7 +957,7 @@ private fun FavoriteButton(
     val database = LocalDatabase.current
     val playerConnection = LocalPlayerConnection.current ?: return
     val librarySong by database.song(songId).collectAsState(initial = null)
-    val isLiked = librarySong?.song?.liked == true
+    val isLiked = rememberHearted(songId, librarySong?.song?.liked == true)
     
     Box(
         contentAlignment = Alignment.Center,

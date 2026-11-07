@@ -7,6 +7,8 @@
 
 package com.music.vivi.viewmodels
 
+import kotlinx.coroutines.flow.onEach
+import com.music.vivi.utils.LibraryMemoryCache
 import android.content.Context
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -204,7 +206,8 @@ constructor(
             }.distinctUntilChanged()
             .flatMapLatest { (sortType, descending, hideYoutubeShorts) ->
                 database.playlists(sortType, descending).map { it.filterYoutubeShorts(hideYoutubeShorts) }
-            }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+            }.onEach { LibraryMemoryCache.playlists = it }
+            .stateIn(viewModelScope, SharingStarted.Lazily, LibraryMemoryCache.playlists.orEmpty())
 
     fun sync() {
         viewModelScope.launch(Dispatchers.IO) { syncUtils.syncSavedPlaylists() }

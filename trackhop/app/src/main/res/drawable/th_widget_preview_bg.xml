@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The widgets' look in the "Add widget" preview: a plain surface, as Glance draws them. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#26232E" />
+    <corners android:radius="24dp" />
+</shape>

@@ -5,6 +5,14 @@
 
 package com.music.vivi.ui.screens.settings
 
+import androidx.compose.runtime.collectAsState
+import androidx.compose.material3.RadioButton
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.clickable
+import com.music.vivi.constants.HeartTargetPlaylistKey
+import com.music.vivi.LocalDatabase
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -265,6 +273,21 @@ fun PlayerSettings(
     }
     var showAccessibilityPromptDialog by remember { mutableStateOf(false) }
 
+    val database = LocalDatabase.current
+    val (heartTarget, onHeartTargetChange) = rememberPreference(HeartTargetPlaylistKey, defaultValue = "")
+    val heartPlaylist by remember(heartTarget) { database.playlist(heartTarget) }.collectAsState(initial = null)
+    var showHeartTargetDialog by remember { mutableStateOf(false) }
+    if (showHeartTargetDialog) {
+        HeartTargetDialog(
+            selectedId = heartPlaylist?.id.orEmpty(),
+            onSelect = {
+                onHeartTargetChange(it)
+                showHeartTargetDialog = false
+            },
+            onDismiss = { showHeartTargetDialog = false },
+        )
+    }
+
     var showAudioQualityDialog by remember {
         mutableStateOf(false)
     }
@@ -358,6 +381,13 @@ fun PlayerSettings(
                         )
                     },
                     onClick = { showAudioQualityDialog = true }
+                ))
+                add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.favorite),
+                    modifier = Modifier.settingTarget("heart_target", scrollState),
+                    title = { Text(stringResource(R.string.heart_target)) },
+                    description = { Text(heartPlaylist?.playlist?.name ?: stringResource(R.string.liked_songs)) },
+                    onClick = { showHeartTargetDialog = true }
                 ))
                 // JioSaavn settings navigation
                 add(Material3SettingsItem(
@@ -1342,3 +1372,47 @@ fun CustomizePlayerButtonsDialog(
     }
 }
 
+@Composable
+private fun HeartTargetDialog(
+    selectedId: String,
+    onSelect: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val database = LocalDatabase.current
+    val playlists by remember { database.editablePlaylistsByNameAsc() }.collectAsState(initial = emptyList())
+
+    @Composable
+    fun Option(name: String, id: String) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onSelect(id) }
+                .padding(vertical = 6.dp),
+        ) {
+            RadioButton(selected = selectedId == id, onClick = null)
+            Spacer(Modifier.width(12.dp))
+            Text(name, style = MaterialTheme.typography.bodyLarge)
+        }
+    }
+
+    DefaultDialog(
+        onDismiss = onDismiss,
+        title = { Text(stringResource(R.string.heart_target)) },
+        horizontalAlignment = Alignment.Start,
+        buttons = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+        },
+    ) {
+        Text(
+            text = stringResource(R.string.heart_target_desc),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 8.dp),
+        )
+        LazyColumn(modifier = Modifier.heightIn(max = 360.dp)) {
+            item { Option(stringResource(R.string.liked_songs), "") }
+            items(playlists, key = { it.id }) { Option(it.playlist.name, it.id) }
+        }
+    }
+}

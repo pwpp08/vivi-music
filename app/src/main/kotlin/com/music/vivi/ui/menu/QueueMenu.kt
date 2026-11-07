@@ -5,6 +5,8 @@
 
 package com.music.vivi.ui.menu
 
+import com.music.vivi.utils.rememberHeartRouter
+import com.music.vivi.utils.rememberHearted
 import android.content.Intent
 import android.content.res.Configuration
 import androidx.compose.animation.core.animateFloatAsState
@@ -96,6 +98,7 @@ fun QueueMenu(
     val playerConnection = LocalPlayerConnection.current ?: return
     val coroutineScope = rememberCoroutineScope()
     val syncUtils = LocalSyncUtils.current
+    val heartRouter = rememberHeartRouter()
 
     val librarySong by database.song(mediaMetadata.id).collectAsState(initial = null)
     val download by LocalDownloadUtil.current.getDownload(mediaMetadata.id)
@@ -187,7 +190,7 @@ fun QueueMenu(
         trailingContent = {
             IconButton(
                 onClick = {
-                    coroutineScope.launch(Dispatchers.IO) {
+                    heartRouter.toggle(mediaMetadata) { coroutineScope.launch(Dispatchers.IO) {
                         database.transaction {
                             if (librarySong == null) {
                                 insert(mediaMetadata)
@@ -201,15 +204,16 @@ fun QueueMenu(
                             }
                             syncUtils.likeSong(s)
                         }
-                    }
+                    } }
                 },
             ) {
+                val hearted = rememberHearted(mediaMetadata.id, librarySong?.song?.liked == true)
                 Icon(
                     painter = painterResource(
-                        if (librarySong?.song?.liked == true) R.drawable.favorite
+                        if (hearted) R.drawable.favorite
                         else R.drawable.favorite_border
                     ),
-                    tint = if (librarySong?.song?.liked == true) MaterialTheme.colorScheme.error
+                    tint = if (hearted) MaterialTheme.colorScheme.error
                     else LocalContentColor.current,
                     contentDescription = null,
                 )

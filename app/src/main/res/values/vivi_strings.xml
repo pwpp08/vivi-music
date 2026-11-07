@@ -1246,4 +1246,8 @@
     <string name="swiper_subtitle">Discover new songs tailored to your taste</string>
     <string name="refresh">Refresh</string>
     <string name="back">Back</string>
+    <string name="heart_target">Heart button saves to</string>
+    <string name="heart_target_desc">Choose where songs go when you tap the heart. With a playlist chosen, they are not added to your liked songs.</string>
+    <string name="playlist_sync">Playlist sync</string>
+    <string name="playlist_sync_desc">Sync playlists between music services</string>
 </resources>

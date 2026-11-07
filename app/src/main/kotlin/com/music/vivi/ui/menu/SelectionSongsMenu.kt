@@ -5,6 +5,8 @@
 
 package com.music.vivi.ui.menu
 
+import com.music.vivi.utils.rememberHeartRouter
+import com.music.vivi.utils.rememberAllHearted
 import android.annotation.SuppressLint
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.PaddingValues
@@ -93,13 +95,15 @@ fun SelectionSongMenu(
         )
     }
 
-    val allLiked by remember(songSelection) {
+    val heartRouter = rememberHeartRouter()
+    val allLikedPlain by remember(songSelection) {
         mutableStateOf(
             songSelection.isNotEmpty() && songSelection.all {
                 it.song.liked
             },
         )
     }
+    val allLiked = rememberAllHearted(songSelection.map { it.id }, allLikedPlain)
 
     var downloadState by remember {
         mutableIntStateOf(Download.STATE_STOPPED)
@@ -471,12 +475,14 @@ fun SelectionSongMenu(
                             onClick = {
                                 val allLiked = songSelection.all { it.song.liked }
                                 onDismiss()
-                                database.query {
-                                    songSelection.forEach { song ->
-                                        if ((!allLiked && !song.song.liked) || allLiked) {
-                                            val s = song.song.toggleLike()
-                                            update(s)
-                                            syncUtils.likeSong(s)
+                                heartRouter.toggleAll(songSelection.map { it.toMediaMetadata() }) {
+                                    database.query {
+                                        songSelection.forEach { song ->
+                                            if ((!allLiked && !song.song.liked) || allLiked) {
+                                                val s = song.song.toggleLike()
+                                                update(s)
+                                                syncUtils.likeSong(s)
+                                            }
                                         }
                                     }
                                 }
@@ -545,9 +551,11 @@ fun SelectionMediaMetadataMenu(
     val listenTogetherManager = com.music.vivi.LocalListenTogetherManager.current
     val isGuest = listenTogetherManager?.isInRoom == true && listenTogetherManager.isHost == false
 
-    val allLiked by remember(songSelection) {
+    val heartRouter = rememberHeartRouter()
+    val allLikedPlain by remember(songSelection) {
         mutableStateOf(songSelection.isNotEmpty() && songSelection.all { it.liked })
     }
+    val allLiked = rememberAllHearted(songSelection.map { it.id }, allLikedPlain)
 
     var showChoosePlaylistDialog by rememberSaveable {
         mutableStateOf(false)
@@ -777,14 +785,16 @@ fun SelectionMediaMetadataMenu(
                                 )
                             },
                             onClick = {
-                                database.query {
-                                    if (allLiked) {
-                                        songSelection.forEach { song ->
-                                            update(song.toSongEntity().toggleLike())
-                                        }
-                                    } else {
-                                        songSelection.filter { !it.liked }.forEach { song ->
-                                            update(song.toSongEntity().toggleLike())
+                                heartRouter.toggleAll(songSelection) {
+                                    database.query {
+                                        if (allLikedPlain) {
+                                            songSelection.forEach { song ->
+                                                update(song.toSongEntity().toggleLike())
+                                            }
+                                        } else {
+                                            songSelection.filter { !it.liked }.forEach { song ->
+                                                update(song.toSongEntity().toggleLike())
+                                            }
                                         }
                                     }
                                 }

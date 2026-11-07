@@ -1,5 +1,6 @@
 package com.music.vivi.ui.player
 
+import com.music.vivi.utils.rememberHearted
 import android.content.BroadcastReceiver
 import android.content.Intent
 import android.content.IntentFilter
@@ -110,6 +111,7 @@ fun PlayerV2(
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val isPlaying by playerConnection.isEffectivelyPlaying.collectAsState()
     val currentSong by playerConnection.currentSong.collectAsState(initial = null)
+    val isHearted = rememberHearted(currentSong?.song?.id, currentSong?.song?.liked == true)
     val currentLyrics by playerConnection.currentLyrics.collectAsState(initial = null)
     val menuState = LocalMenuState.current
     val bottomSheetPageState = LocalBottomSheetPageState.current
@@ -482,7 +484,7 @@ fun PlayerV2(
                                             animatedVisibilityScope = this@AnimatedContent
                                         )
                                     ) {
-                                        val isLiked = currentSong?.song?.liked == true
+                                        val isLiked = isHearted
 
 
                                         Box(
@@ -624,7 +626,7 @@ fun PlayerV2(
                                             animatedVisibilityScope = this@AnimatedContent
                                         )
                                     ) {
-                                        val isLiked = currentSong?.song?.liked == true
+                                        val isLiked = isHearted
                                         
                                         IconButton(
                                             onClick = playerConnection::toggleLike

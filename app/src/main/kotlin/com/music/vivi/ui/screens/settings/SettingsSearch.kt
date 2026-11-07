@@ -482,6 +482,15 @@ private fun buildSettingSearchIndex(context: Context): List<SettingSearchEntry> 
             iconRes = R.drawable.earbud_case
         ),
         SettingSearchEntry(
+            title = str(R.string.heart_target),
+            description = str(R.string.heart_target_desc),
+            category = "Playback",
+            route = "settings/player",
+            settingKey = "heart_target",
+            keywords = listOf("heart", "like", "liked songs", "favorite", "playlist", "rewire"),
+            iconRes = R.drawable.favorite
+        ),
+        SettingSearchEntry(
             title = "Audio quality",
             description = "Streaming bitrate quality (High 256kbps, Medium, Low 128kbps)",
             category = "Playback",

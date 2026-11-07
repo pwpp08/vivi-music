@@ -5,6 +5,8 @@
 
 package com.music.vivi.viewmodels
 
+import kotlinx.coroutines.flow.onEach
+import com.music.vivi.utils.LibraryMemoryCache
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -75,7 +77,12 @@ constructor(
                     else -> kotlinx.coroutines.flow.flowOf(emptyList())
                 }
             }
-            .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Lazily, emptyList())
+            .onEach { LibraryMemoryCache.putAutoSongs(playlist, it) }
+            .stateIn(
+                viewModelScope,
+                kotlinx.coroutines.flow.SharingStarted.Lazily,
+                LibraryMemoryCache.autoSongsOf(playlist).orEmpty(),
+            )
 
     fun syncLikedSongs() {
         viewModelScope.launch(Dispatchers.IO) { syncUtils.syncLikedSongs() }

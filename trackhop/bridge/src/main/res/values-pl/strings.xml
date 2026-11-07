@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Texts of the built-in web connectors. The bridge_ prefix keeps them apart from Vivi's own. -->
+<resources>
+    <string name="th_bridge_amazon_capture_intro">Korzystaj tu z Amazon Music normalnie: otwórz Bibliotekę → Playlisty, otwórz jedną ze swoich playlist, utwórz playlistę, dodaj do niej utwór, usuń go, wyszukaj utwór; z menu playlisty (trzy kropki obok Odtwórz) zmień jej nazwę i usuń ją. Każde wywołanie wykonane przez odtwarzacz jest zapisywane do pliku w tym telefonie, bez ciasteczek i tokenów. Potem dotknij Udostępnij i wyślij plik do dewelopera.</string>
+    <string name="th_bridge_amazon_capture_share">Udostępnij</string>
+    <string name="th_bridge_amazon_capture_clear">Wyczyść</string>
+    <string name="th_bridge_amazon_capture_count">Przechwycone wywołania: %1$d</string>
+    <string name="th_bridge_disclaimer_title">Zastrzeżenie</string>
+    <string name="th_bridge_disclaimer_body">Konektory internetowe Vivi (YouTube Music, Amazon Music, SoundCloud oraz logowanie przez stronę dla Spotify, Apple Music i Deezer) są częścią niezależnego projektu open source, niepowiązanego z Google, YouTube, Amazon, Spotify, Apple, Deezer, SoundCloud ani żadnym serwisem muzycznym, nieautoryzowanego i niewspieranego przez nie.\n\nŁączą się z tymi serwisami przez te same interfejsy, których używają ich własne odtwarzacze internetowe, a nie przez oficjalne API. Jest to niezgodne z ich regulaminami. Mogą przestać działać w każdej chwili, a serwis może ograniczyć, zawiesić lub zamknąć konto, którym się logujesz.\n\nOprogramowanie jest dostarczane „takie, jakie jest”, bez jakiejkolwiek gwarancji. Kontynuując, akceptujesz, że używasz go wyłącznie na własne ryzyko i że deweloper nie ponosi żadnej odpowiedzialności za jakiekolwiek konsekwencje, w tym ograniczenia na twoich kontach lub utratę danych.</string>
+    <string name="th_bridge_disclaimer_accept">Rozumiem i akceptuję</string>
+    <string name="th_bridge_login_hint">Zaloguj się na stronie serwisu. Ten ekran zamknie się sam; jeśli nie, dotknij Gotowe.</string>
+    <string name="th_bridge_login_finishing">Prawie gotowe: odtwarzacz się uruchamia, zostaw ten ekran otwarty, aż zamknie się sam. Jeśli odtwarzacz zapyta, kto słucha, wybierz swój profil.</string>
+    <string name="th_bridge_login_done">Gotowe</string>
+    <string name="th_bridge_login_not_signed_in">Brak sesji: najpierw dokończ logowanie na tej stronie.</string>
+    <string name="th_bridge_login_stay">Zostań</string>
+    <string name="th_bridge_login_leave">Wyjdź</string>
+    <string name="th_bridge_login_blocked">%1$s zablokował to logowanie jako nietypową aktywność. Odczekaj chwilę i spróbuj ponownie, najlepiej przez Wi-Fi i bez VPN; jeśli pojawi się łamigłówka, rozwiąż ją.</string>
+    <string name="th_bridge_language_system">Język systemu</string>
+    <string name="th_bridge_verify_hint">Google zablokował ten adres sieciowy z powodu nietypowego ruchu. Blokada znika sama kilka minut po ustaniu żądań: Vivi wstrzymuje wszystkie wywołania YouTube Music na tak długo, jak prosi Google. Jeśli strona Google oferuje weryfikację, jej wykonanie tutaj zdejmuje blokadę od razu.</string>
+    <string name="th_bridge_login_title">Zaloguj się do YouTube Music</string>
+    <string name="th_bridge_amazon_title">Amazon Music (eksperymentalne)</string>
+    <string name="th_bridge_amazon_capture">Przechwyć ruch</string>
+    <string name="th_bridge_verify_google">Co mówi Google</string>
+    <string name="th_bridge_capture_site_intro">Używaj tu %1$s normalnie: zaloguj się, otwórz playlistę, wyszukaj utwór, utwórz testową playlistę, dodaj utwór, usuń go, zmień nazwę i usuń playlistę. Każde wywołanie do %1$s trafia do pliku na tym telefonie, bez ciasteczek, tokenów i haseł. Potem dotknij Udostępnij i wyślij plik deweloperowi.</string>
+    <string name="th_bridge_capture_warning_title">Ten ekran nagrywa</string>
+    <string name="th_bridge_capture_warning_body">To, co robisz na tej stronie, trafia do pliku na tym telefonie (bez haseł, e-maili i tokenów). Udostępnij plik tylko deweloperowi, nigdy w publicznym zgłoszeniu. Usuwa się sam po jednym dniu.</string>
+    <string name="th_bridge_capture_delete_title">Usunąć przechwycenie?</string>
+    <string name="th_bridge_capture_delete_body">Plik zostanie na tym telefonie przez dzień, chyba że usuniesz go teraz.</string>
+    <string name="th_bridge_capture_delete">Usuń</string>
+    <string name="th_bridge_capture_keep">Zachowaj</string>
+    <string name="th_bridge_page_crashed">Strona przestała działać i została zamknięta. Spróbuj ponownie.</string>
+</resources>

@@ -5,6 +5,7 @@
 
 package com.music.vivi.viewmodels
 
+import com.music.vivi.utils.HeartRouter
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -31,6 +32,7 @@ import javax.inject.Inject
 class MusicSwiperViewModel @Inject constructor(
     @ApplicationContext val context: Context,
     val database: MusicDatabase,
+    private val heartRouter: HeartRouter,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -124,6 +126,7 @@ class MusicSwiperViewModel @Inject constructor(
         _likedCount.value += 1
 
         viewModelScope.launch(Dispatchers.IO) {
+            if (heartRouter.addIfRouted(song.toMediaMetadata())) return@launch
             val metadata = song.toMediaMetadata().copy(
                 liked = true,
                 likedDate = LocalDateTime.now(),

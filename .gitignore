@@ -98,6 +98,8 @@ output-metadata.json
 # Binary files and core dumps
 core
 core.*
+# ...but not the playlist sync engine module
+!/trackhop/core/
 *.so
 *.bin
 .env

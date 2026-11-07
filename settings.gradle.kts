@@ -39,6 +39,14 @@ include(":vivimusiccanvas")
 include(":jiosaavn")
 include(":spotify")
 include(":lyricsProvider")
+include(":trackhop-core")
+include(":trackhop-ytm")
+include(":trackhop-bridge")
+include(":trackhop-app")
+project(":trackhop-core").projectDir = file("trackhop/core")
+project(":trackhop-ytm").projectDir = file("trackhop/ytm")
+project(":trackhop-bridge").projectDir = file("trackhop/bridge")
+project(":trackhop-app").projectDir = file("trackhop/app")
 
 // Use a local copy of NewPipe Extractor by uncommenting the lines below.
 // We assume, that vivimusic and NewPipe Extractor have the same parent directory.

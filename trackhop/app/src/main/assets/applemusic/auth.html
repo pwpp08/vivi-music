@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Apple Music</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: -apple-system, system-ui, sans-serif; margin: 0; padding: 24px;
+         display: flex; flex-direction: column; gap: 16px; align-items: center; justify-content: center;
+         min-height: 80vh; text-align: center; }
+  h1 { font-size: 1.25rem; margin: 0; }
+  p { margin: 0; opacity: .8; line-height: 1.4; }
+  button { font-size: 1rem; padding: 12px 22px; border-radius: 999px; border: 0;
+           background: #FA243C; color: #fff; }
+  #err { color: #c00; }
+</style>
+</head>
+<body>
+<h1>Apple Music</h1>
+<p id="msg">Caricamento…</p>
+<button id="go" hidden>Accedi con Apple Music</button>
+<p id="err"></p>
+
+<!-- MusicKit JS: l'unico modo per ottenere il "music user token" senza un backend. -->
+<script src="https://js-cdn.music.apple.com/musickit/v3/musickit.js" async></script>
+<script>
+  var msg = document.getElementById('msg');
+  var err = document.getElementById('err');
+  var go = document.getElementById('go');
+
+  function fail(e) {
+    err.textContent = String((e && e.message) || e || 'errore sconosciuto');
+    msg.textContent = 'Accesso non riuscito.';
+    go.hidden = false;
+    if (window.Bridge && Bridge.onError) Bridge.onError(err.textContent);
+  }
+
+  document.addEventListener('musickitloaded', function () {
+    var params = new URLSearchParams(location.search);
+    MusicKit.configure({
+      developerToken: params.get('dt'),
+      app: { name: 'Trackhop', build: params.get('v') || '1.0' }
+    }).then(function () {
+      msg.textContent = 'Tocca per accedere e autorizzare l’app.';
+      go.hidden = false;
+      go.onclick = authorize;
+      authorize();
+    }).catch(fail);
+  });
+
+  function authorize() {
+    err.textContent = '';
+    msg.textContent = 'Autorizzazione in corso…';
+    try {
+      MusicKit.getInstance().authorize().then(function (token) {
+        if (token) { msg.textContent = 'Fatto.'; Bridge.onToken(token); }
+        else fail('token vuoto');
+      }).catch(fail);
+    } catch (e) { fail(e); }
+  }
+
+  // Se MusicKit non si carica (rete, CDN bloccato) lo diciamo invece di restare in attesa.
+  setTimeout(function () {
+    if (typeof MusicKit === 'undefined') fail('MusicKit JS non raggiungibile');
+  }, 15000);
+</script>
+</body>
+</html>

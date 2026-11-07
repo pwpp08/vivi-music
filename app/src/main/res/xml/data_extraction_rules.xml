@@ -14,6 +14,16 @@
         <exclude
             domain="database"
             path="exoplayer_internal.db" />
+        <exclude domain="sharedpref" path="tokens.xml" />
+        <exclude domain="sharedpref" path="amazon_session.xml" />
+        <exclude domain="sharedpref" path="ytm_session.xml" />
+        <exclude domain="sharedpref" path="apple_session.xml" />
+        <exclude domain="sharedpref" path="spotify_session.xml" />
+        <exclude domain="sharedpref" path="deezer_session.xml" />
+        <exclude domain="sharedpref" path="soundcloud_session.xml" />
+        <exclude domain="sharedpref" path="liveone_session.xml" />
+        <exclude domain="sharedpref" path="anghami_session.xml" />
+        <exclude domain="sharedpref" path="qobuz_session.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude
@@ -25,5 +35,15 @@
         <exclude
             domain="database"
             path="exoplayer_internal.db" />
+        <exclude domain="sharedpref" path="tokens.xml" />
+        <exclude domain="sharedpref" path="amazon_session.xml" />
+        <exclude domain="sharedpref" path="ytm_session.xml" />
+        <exclude domain="sharedpref" path="apple_session.xml" />
+        <exclude domain="sharedpref" path="spotify_session.xml" />
+        <exclude domain="sharedpref" path="deezer_session.xml" />
+        <exclude domain="sharedpref" path="soundcloud_session.xml" />
+        <exclude domain="sharedpref" path="liveone_session.xml" />
+        <exclude domain="sharedpref" path="anghami_session.xml" />
+        <exclude domain="sharedpref" path="qobuz_session.xml" />
     </device-transfer>
 </data-extraction-rules>

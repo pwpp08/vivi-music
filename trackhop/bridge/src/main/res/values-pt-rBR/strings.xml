@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Texts of the built-in web connectors. The bridge_ prefix keeps them apart from Vivi's own. -->
+<resources>
+    <string name="th_bridge_amazon_capture_intro">Use o Amazon Music normalmente aqui: abra Biblioteca → Playlists, abra uma das suas playlists, crie uma playlist, adicione uma música a ela, remova-a, pesquise uma música; no menu da playlist (os três pontos ao lado de Tocar) renomeie-a e exclua-a. Cada chamada que o player faz é gravada em um arquivo neste celular, sem cookies nem tokens. Depois toque em Compartilhar e envie o arquivo ao desenvolvedor.</string>
+    <string name="th_bridge_amazon_capture_share">Compartilhar</string>
+    <string name="th_bridge_amazon_capture_clear">Limpar</string>
+    <string name="th_bridge_amazon_capture_count">%1$d chamadas capturadas</string>
+    <string name="th_bridge_disclaimer_title">Aviso legal</string>
+    <string name="th_bridge_disclaimer_body">Os conectores web do Vivi (YouTube Music, Amazon Music, SoundCloud e o login web do Spotify, do Apple Music e do Deezer) fazem parte de um projeto independente e de código aberto, sem afiliação, endosso ou ligação com Google, YouTube, Amazon, Spotify, Apple, Deezer, SoundCloud ou qualquer serviço de música.\n\nEles falam com esses serviços pelas mesmas interfaces que seus próprios players web usam, não por uma API oficial. Isso vai contra os termos de serviço deles. Podem parar de funcionar a qualquer momento, e o serviço pode limitar, suspender ou encerrar a conta com que você entrar.\n\nO software é fornecido \"como está\", sem garantia de qualquer tipo. Ao continuar, você aceita que o usa inteiramente por sua conta e risco e que o desenvolvedor não assume nenhuma responsabilidade por qualquer consequência, incluindo restrições nas suas contas ou perda de dados.</string>
+    <string name="th_bridge_disclaimer_accept">Entendi e aceito</string>
+    <string name="th_bridge_login_hint">Entre na página do serviço. Esta tela fecha sozinha; se não fechar, toque em Concluído.</string>
+    <string name="th_bridge_login_finishing">Quase lá: o player está iniciando, deixe esta tela aberta até ela fechar sozinha. Se o player perguntar quem está ouvindo, escolha seu perfil.</string>
+    <string name="th_bridge_login_done">Concluído</string>
+    <string name="th_bridge_login_not_signed_in">Ainda sem sessão: conclua o login nesta página primeiro.</string>
+    <string name="th_bridge_login_stay">Ficar</string>
+    <string name="th_bridge_login_leave">Sair</string>
+    <string name="th_bridge_login_blocked">%1$s bloqueou este login como atividade incomum. Espere um pouco e tente de novo, de preferência no Wi-Fi e sem VPN; se aparecer um quebra-cabeça, resolva-o.</string>
+    <string name="th_bridge_language_system">Idioma do sistema</string>
+    <string name="th_bridge_verify_hint">O Google bloqueou este endereço de rede por tráfego incomum. O bloqueio some sozinho alguns minutos depois que as requisições param: o Vivi pausa todas as chamadas ao YouTube Music pelo tempo que o Google pedir. Se a página do Google oferecer uma verificação, concluí-la aqui remove o bloqueio na hora.</string>
+    <string name="th_bridge_login_title">Entrar no YouTube Music</string>
+    <string name="th_bridge_amazon_title">Amazon Music (experimental)</string>
+    <string name="th_bridge_amazon_capture">Capturar tráfego</string>
+    <string name="th_bridge_verify_google">O que o Google diz</string>
+    <string name="th_bridge_capture_site_intro">Use o %1$s normalmente aqui: entre, abra uma playlist, busque uma música, crie uma playlist de teste, adicione uma música, remova-a, renomeie e apague a playlist. Cada chamada ao %1$s vai para um arquivo neste celular, sem cookies, tokens ou senhas. Depois toque em Compartilhar e envie o arquivo ao desenvolvedor.</string>
+    <string name="th_bridge_capture_warning_title">Esta tela grava</string>
+    <string name="th_bridge_capture_warning_body">O que você faz neste site vai para um arquivo neste celular (sem senhas, e-mails e tokens). Compartilhe o arquivo só com o desenvolvedor, nunca em uma issue pública. Ele é apagado sozinho depois de um dia.</string>
+    <string name="th_bridge_capture_delete_title">Apagar a captura?</string>
+    <string name="th_bridge_capture_delete_body">O arquivo fica neste celular por um dia, a menos que você o apague agora.</string>
+    <string name="th_bridge_capture_delete">Apagar</string>
+    <string name="th_bridge_capture_keep">Manter</string>
+    <string name="th_bridge_page_crashed">A página parou de funcionar e foi fechada. Tente de novo.</string>
+</resources>

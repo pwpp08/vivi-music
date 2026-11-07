@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Texts of the built-in web connectors. The bridge_ prefix keeps them apart from Vivi's own. -->
+<resources>
+    <string name="th_bridge_amazon_capture_intro">Пользуйтесь Amazon Music здесь как обычно: откройте Library → Playlists, откройте один из своих плейлистов, создайте плейлист, добавьте в него песню, удалите её, найдите песню через поиск; из меню плейлиста (три точки рядом с Play) переименуйте и удалите его. Каждый вызов плеера записывается в файл на этом телефоне, без cookie и токенов. Затем нажмите «Поделиться» и отправьте файл разработчику.</string>
+    <string name="th_bridge_amazon_capture_share">Поделиться</string>
+    <string name="th_bridge_amazon_capture_clear">Очистить</string>
+    <string name="th_bridge_amazon_capture_count">Записано вызовов: %1$d</string>
+    <string name="th_bridge_disclaimer_title">Отказ от ответственности</string>
+    <string name="th_bridge_disclaimer_body">Веб-коннекторы Vivi (YouTube Music, Amazon Music, SoundCloud и веб-вход для Spotify, Apple Music и Deezer) — часть независимого проекта с открытым исходным кодом, не связанного с Google, YouTube, Amazon, Spotify, Apple, Deezer, SoundCloud или каким-либо музыкальным сервисом и не одобренного ими.\n\nОни обращаются к этим сервисам через те же интерфейсы, что и их собственные веб-плееры, а не через официальный API. Это противоречит их условиям использования. Они могут перестать работать в любой момент, а сервис может ограничить, приостановить или закрыть аккаунт, с которым вы входите.\n\nПрограмма предоставляется «как есть», без каких-либо гарантий. Продолжая, вы соглашаетесь, что используете её полностью на свой риск и что разработчик не несёт ответственности за любые последствия, включая ограничения ваших аккаунтов или потерю данных.</string>
+    <string name="th_bridge_disclaimer_accept">Понимаю и принимаю</string>
+    <string name="th_bridge_login_hint">Войдите на странице сервиса. Этот экран закроется сам; если нет, нажмите «Готово».</string>
+    <string name="th_bridge_login_finishing">Почти готово: плеер запускается, не закрывайте этот экран, пока он не закроется сам. Если плеер спросит, кто слушает, выберите свой профиль.</string>
+    <string name="th_bridge_login_done">Готово</string>
+    <string name="th_bridge_login_not_signed_in">Сессии пока нет: сначала завершите вход на этой странице.</string>
+    <string name="th_bridge_login_stay">Остаться</string>
+    <string name="th_bridge_login_leave">Выйти</string>
+    <string name="th_bridge_login_blocked">%1$s заблокировал этот вход как необычную активность. Подождите немного и попробуйте снова, лучше через Wi-Fi и без VPN; если появится головоломка, решите её.</string>
+    <string name="th_bridge_language_system">Язык системы</string>
+    <string name="th_bridge_verify_hint">Google заблокировал этот сетевой адрес из-за необычного трафика. Блокировка снимается сама через несколько минут после прекращения запросов: Vivi приостанавливает все вызовы YouTube Music на столько, сколько требует Google. Если страница Google предлагает проверку, её прохождение здесь снимает блокировку сразу.</string>
+    <string name="th_bridge_login_title">Вход в YouTube Music</string>
+    <string name="th_bridge_amazon_title">Amazon Music (экспериментально)</string>
+    <string name="th_bridge_amazon_capture">Записать трафик</string>
+    <string name="th_bridge_verify_google">Что говорит Google</string>
+    <string name="th_bridge_capture_site_intro">Пользуйтесь %1$s здесь как обычно: войдите, откройте плейлист, найдите песню, создайте тестовый плейлист, добавьте песню, удалите её, переименуйте и удалите плейлист. Каждый запрос к %1$s записывается в файл на этом телефоне без cookie, токенов и паролей. Затем нажмите «Поделиться» и отправьте файл разработчику.</string>
+    <string name="th_bridge_capture_warning_title">Этот экран записывает</string>
+    <string name="th_bridge_capture_warning_body">Ваши действия на этом сайте записываются в файл на этом телефоне (без паролей, e-mail и токенов). Отправляйте файл только разработчику, никогда — в публичный issue. Он удаляется сам через сутки.</string>
+    <string name="th_bridge_capture_delete_title">Удалить запись?</string>
+    <string name="th_bridge_capture_delete_body">Файл останется на телефоне на сутки, если не удалить его сейчас.</string>
+    <string name="th_bridge_capture_delete">Удалить</string>
+    <string name="th_bridge_capture_keep">Оставить</string>
+    <string name="th_bridge_page_crashed">Страница перестала работать и была закрыта. Попробуйте ещё раз.</string>
+</resources>

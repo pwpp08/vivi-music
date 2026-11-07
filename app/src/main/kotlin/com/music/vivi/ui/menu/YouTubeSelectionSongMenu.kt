@@ -5,6 +5,8 @@
 
 package com.music.vivi.ui.menu
 
+import com.music.vivi.utils.rememberHeartRouter
+import com.music.vivi.utils.rememberAllHearted
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -82,7 +84,8 @@ fun YouTubeSelectionSongMenu(
     }
 
     // Check if all songs are liked
-    val allLiked by remember(songSelection) {
+    val heartRouter = rememberHeartRouter()
+    val allLikedPlain by remember(songSelection) {
         mutableStateOf(
             songSelection.isNotEmpty() && songSelection.all { song ->
                 // Convert to MediaMetadata to check liked status
@@ -91,6 +94,7 @@ fun YouTubeSelectionSongMenu(
             }
         )
     }
+    val allLiked = rememberAllHearted(songSelection.map { it.id }, allLikedPlain)
 
     // Check if all songs are in library
     val allInLibrary by remember(songSelection) {
@@ -377,10 +381,10 @@ fun YouTubeSelectionSongMenu(
                             )
                         },
                         onClick = {
-                            database.transaction {
+                            heartRouter.toggleAll(songSelection.map { it.toMediaMetadata() }) { database.transaction {
                                 songSelection.forEach { song ->
                                     val metadata = song.toMediaMetadata()
-                                    if ((!allLiked && !metadata.liked) || allLiked) {
+                                    if ((!allLikedPlain && !metadata.liked) || allLikedPlain) {
                                         // Insert the song first if it doesn't exist
                                         insert(metadata)
                                         // Create SongEntity with toggled like status
@@ -402,7 +406,7 @@ fun YouTubeSelectionSongMenu(
                                         syncUtils.likeSong(songEntity)
                                     }
                                 }
-                            }
+                            } }
                             clearAction()
                             onDismiss()
                         }

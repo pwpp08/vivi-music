@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application>
+        <!-- Sign-in screens, started by Trackhop itself: nothing here is reachable from other apps. -->
+        <activity
+            android:name=".LoginActivity"
+            android:exported="false"
+            android:label="@string/th_bridge_login_title" />
+        <activity
+            android:name=".AmazonLoginActivity"
+            android:exported="false"
+            android:label="@string/th_bridge_amazon_title" />
+        <activity
+            android:name=".WebLoginActivity"
+            android:exported="false" />
+        <!-- Google's own page when it blocks the address, shown from the YouTube Music connector. -->
+        <activity
+            android:name=".VerifyActivity"
+            android:exported="false" />
+        <!-- Development aid: records the Amazon web player's API calls so a changed method can be fixed. -->
+        <activity
+            android:name=".AmazonCaptureActivity"
+            android:exported="false"
+            android:label="@string/th_bridge_amazon_capture" />
+
+        <!-- Shares the capture file with other apps (read-only, per request). -->
+        <provider
+            android:name=".BridgeFileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/th_bridge_file_paths" />
+        </provider>
+    </application>
+</manifest>

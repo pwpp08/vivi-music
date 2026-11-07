@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Texts of the built-in web connectors. The bridge_ prefix keeps them apart from Vivi's own. -->
+<resources>
+    <string name="th_bridge_amazon_capture_intro">请在这里正常使用 Amazon Music：打开“资料库 → 歌单”，打开你的一个歌单，创建一个歌单，向其中添加一首歌曲，再将其移除，搜索一首歌曲。播放器发出的每个请求都会被写入这部手机上的一个文件，不包含 Cookie 或令牌。然后点按“分享”，将文件发送给开发者。</string>
+    <string name="th_bridge_amazon_capture_share">分享</string>
+    <string name="th_bridge_amazon_capture_clear">清除</string>
+    <string name="th_bridge_amazon_capture_count">已捕获 %1$d 个请求</string>
+    <string name="th_bridge_disclaimer_title">免责声明</string>
+    <string name="th_bridge_disclaimer_body">Vivi 的网页连接器（YouTube Music、Amazon Music、SoundCloud，以及 Spotify、Apple Music 和 Deezer 的网页登录）属于一个独立的开源项目，与 Google、YouTube、Amazon、Spotify、Apple、Deezer、SoundCloud 或任何音乐服务均无隶属、认可或关联关系。\n\n它们通过这些服务自己的网页播放器所用的接口与之通信，而不是通过官方 API。这违反了这些服务的服务条款。它们可能随时失效，服务方也可能限制、暂停或关闭你用于登录的账号。\n\n本软件按“原样”提供，不附带任何形式的担保。继续即表示你接受：使用本软件的风险完全由你自行承担，开发者对任何后果（包括账号受限或数据丢失）概不负责，亦不承担任何法律责任。</string>
+    <string name="th_bridge_disclaimer_accept">我已了解并接受</string>
+    <string name="th_bridge_login_hint">请在服务的页面上登录。此界面会自动关闭；如果没有关闭，请点按“完成”。</string>
+    <string name="th_bridge_login_finishing">即将完成：播放器正在启动，请保持此界面打开，直到它自动关闭。如果播放器询问谁在收听，请选择你的个人资料。</string>
+    <string name="th_bridge_login_done">完成</string>
+    <string name="th_bridge_login_not_signed_in">尚无会话：请先在此页面上完成登录。</string>
+    <string name="th_bridge_login_stay">留下</string>
+    <string name="th_bridge_login_leave">退出</string>
+    <string name="th_bridge_login_blocked">%1$s 将此次登录判定为异常活动并已阻止。请稍等一段时间后重试，最好使用 Wi-Fi 且不开 VPN；如果出现拼图验证，请完成它。</string>
+    <string name="th_bridge_language_system">系统语言</string>
+    <string name="th_bridge_verify_hint">Google 因异常流量屏蔽了此网络地址。请求停止几分钟后，屏蔽会自动解除：Vivi 会按照 Google 要求的时长暂停所有 YouTube Music 请求。如果 Google 的页面提供验证，在这里完成验证即可立即解除屏蔽。</string>
+    <string name="th_bridge_login_title">登录 YouTube Music</string>
+    <string name="th_bridge_amazon_title">Amazon Music（实验性）</string>
+    <string name="th_bridge_amazon_capture">捕获流量</string>
+    <string name="th_bridge_verify_google">Google 的提示</string>
+    <string name="th_bridge_capture_site_intro">在这里正常使用 %1$s：登录、打开歌单、搜索歌曲、创建测试歌单、添加并删除歌曲、重命名并删除歌单。对 %1$s 的每个请求都会写入本机文件（不含 Cookie、令牌或密码）。然后点按“分享”，把文件发给开发者。</string>
+    <string name="th_bridge_capture_warning_title">此界面会记录</string>
+    <string name="th_bridge_capture_warning_body">你在该网站上的操作会写入本机文件（不含密码、邮箱和令牌）。只把文件分享给开发者，切勿发到公开的 issue。文件一天后会自动删除。</string>
+    <string name="th_bridge_capture_delete_title">删除抓取文件？</string>
+    <string name="th_bridge_capture_delete_body">除非现在删除，文件会在本机保留一天。</string>
+    <string name="th_bridge_capture_delete">删除</string>
+    <string name="th_bridge_capture_keep">保留</string>
+    <string name="th_bridge_page_crashed">页面已停止运行并被关闭。请重试。</string>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only the cards and the exported logs folders of the cache are ever shared. -->
+<paths>
+    <cache-path name="cards" path="cards/" />
+    <cache-path name="logs" path="logs/" />
+</paths>

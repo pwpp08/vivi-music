@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- A purr on the vibrator in the About box (ui/Oli.kt): a normal permission, never asked. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <!-- Sync manuali lunghe in primo piano con notifica di avanzamento (tipo dataSync). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Radio syncs: an alarm wakes the listening when a radio's window opens (exact, where the user
+         allows it, so it may start in the background), armed again after a reboot. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Necessario per aprire il browser (Custom Tabs) per il login OAuth su Android 11+. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+        <!-- Connector plugins: apps implementing Trackhop's open connector interface advertise this action. -->
+        <intent>
+            <action android:name="com.xlollx.songport.action.CONNECTOR" />
+        </intent>
+    </queries>
+
+    <application>
+
+        <activity
+            android:name=".MainActivity"
+            android:theme="@style/Theme.Songport"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:label="@string/th_app_name"
+            android:windowSoftInputMode="adjustResize">
+            <!-- "Condividi con Trackhop" da Spotify, Apple Music, YouTube…: il link diventa l'origine di una sync. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <!-- "Open with Trackhop" for track and playlist links: off until the user turns it on in Settings
+             (PackageManager enables the alias). No autoVerify on purpose: Android offers Trackhop next to
+             the service's app in its chooser; it never takes a link by itself. -->
+        <activity-alias
+            android:name=".MusicLinkActivity"
+            android:targetActivity=".MainActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:label="@string/th_app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="open.spotify.com" />
+                <data android:host="spotify.link" />
+                <data android:host="music.apple.com" />
+                <data android:host="music.youtube.com" />
+                <data android:host="youtu.be" />
+                <data android:host="www.deezer.com" />
+                <data android:host="deezer.com" />
+                <data android:host="deezer.page.link" />
+                <data android:host="tidal.com" />
+                <data android:host="listen.tidal.com" />
+                <data android:host="link.tidal.com" />
+                <data android:host="music.amazon.com" />
+                <data android:host="music.amazon.co.uk" />
+                <data android:host="music.amazon.de" />
+                <data android:host="music.amazon.fr" />
+                <data android:host="music.amazon.it" />
+                <data android:host="music.amazon.es" />
+                <data android:host="music.amazon.ca" />
+                <data android:host="music.amazon.com.au" />
+                <data android:host="music.amazon.co.jp" />
+                <data android:host="music.amazon.com.br" />
+                <data android:host="music.amazon.com.mx" />
+                <data android:host="music.amazon.in" />
+                <data android:host="music.amazon.nl" />
+                <data android:host="music.amazon.se" />
+                <data android:host="music.amazon.pl" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- Login Apple Music: MusicKit JS dentro una WebView (Apple non ha un OAuth da app). -->
+        <activity
+            android:name=".auth.AppleAuthActivity"
+            android:exported="false"
+            android:label="@string/th_app_name" />
+
+        <!-- The cards (compatibility, poster) leave the app as PNG files through the share sheet. -->
+        <!-- Its own subclass: the bridge module declares the plain FileProvider for its captures, and
+             the manifest merger would fold two declarations of the same class into one. -->
+        <provider
+            android:name=".ui.CardsFileProvider"
+            android:authorities="${applicationId}.cards"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/th_file_paths" />
+        </provider>
+
+        <!-- Widget home: ultima sync + "Sincronizza tutto". -->
+        <receiver
+            android:name=".widget.SyncWidget"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.xlollx.songport.widget.SYNC_ALL" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/th_widget_sync_info" />
+        </receiver>
+
+        <!-- Glance widgets (GlanceWidgets.kt): every sync, one sync chosen when placed, "Sync all". -->
+        <receiver android:name=".widget.SyncListWidgetReceiver" android:exported="true" android:label="@string/th_widget_list_label">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/th_widget_list_info" />
+        </receiver>
+        <receiver android:name=".widget.OneSyncWidgetReceiver" android:exported="true" android:label="@string/th_widget_one_label">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/th_widget_one_info" />
+        </receiver>
+        <receiver android:name=".widget.SyncAllWidgetReceiver" android:exported="true" android:label="@string/th_widget_all_label">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/th_widget_all_info" />
+        </receiver>
+        <activity android:name=".widget.OneSyncWidgetConfigure" android:exported="true" android:theme="@style/Theme.Songport"
+            android:excludeFromRecents="true">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" /></intent-filter>
+        </activity>
+
+        <!-- Quick Settings tile "Sync all": runs every sync; its subtitle says when the last ran. -->
+        <service
+            android:name=".widget.SyncAllTile"
+            android:exported="true"
+            android:icon="@drawable/th_ic_notification"
+            android:label="@string/th_tile_sync_all"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <!-- Pausa / riprendi / interrompi dalla notifica di avanzamento. -->
+        <!-- Commands from automation apps (Tasker, MacroDroid…): exported, honoured only while
+             automation is on in Settings (off by default). -->
+        <receiver android:name=".automation.AutomationReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="com.xlollx.songport.action.RUN_ALL" />
+                <action android:name="com.xlollx.songport.action.RUN" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".sync.SyncControlReceiver"
+            android:exported="false" />
+
+        <!-- WorkManager in primo piano: dichiara il tipo di servizio richiesto da Android 14+. -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            tools:node="merge" />
+
+        <!-- Radio syncs: every 2 minutes in a radio's window, a short visit to its stream for the title on
+             air, in the foreground with a quiet "Listening to …" notification (see sync/RadioListening.kt). -->
+        <service
+            android:name=".sync.RadioService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <!-- The radio's alarm, and re-arming it when alarms are lost or move (reboot, update, time zone). -->
+        <receiver
+            android:name=".sync.RadioAlarmReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Accesso a server personali (Subsonic/Navidrome, Jellyfin, Plex) e sorgenti a nome utente. -->
+        <activity
+            android:name=".auth.ServerLoginActivity"
+            android:exported="false"
+            android:label="@string/th_app_name"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Sblocco con impronta/PIN (BiometricPrompt richiede una FragmentActivity). -->
+        <activity
+            android:name=".auth.LockActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Songport" />
+
+        <!-- The service's own sign-in page inside the app (Spotify, Deezer, TIDAL): see WebAuthActivity. -->
+        <activity
+            android:name=".auth.WebAuthActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Songport" />
+
+        <!-- Riceve il redirect OAuth dal browser: songport://callback e lo schema Google. -->
+        <activity
+            android:name=".auth.AuthCallbackActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.Songport">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="songport" android:host="callback" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="${googleRedirectScheme}" />
+            </intent-filter>
+        </activity>
+
+    </application>
+</manifest>

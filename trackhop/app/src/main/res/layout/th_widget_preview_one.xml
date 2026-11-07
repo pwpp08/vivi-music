@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What the launcher shows before the widget draws itself (and in the "Add widget" preview): only
+     views RemoteViews takes, no theme attributes, so every launcher can draw it. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/th_widget_preview_bg"
+    android:orientation="vertical"
+    android:padding="12dp">
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/th_widget_one_label"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:background="@drawable/th_widget_preview_row"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="8dp">
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:scaleType="fitStart"
+            android:src="@drawable/th_widget_preview_bar"
+            android:importantForAccessibility="no" />
+        <FrameLayout
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/th_widget_preview_play">
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_gravity="center"
+                android:src="@drawable/th_ic_widget_play"
+                android:importantForAccessibility="no" />
+        </FrameLayout>
+    </LinearLayout>
+</LinearLayout>

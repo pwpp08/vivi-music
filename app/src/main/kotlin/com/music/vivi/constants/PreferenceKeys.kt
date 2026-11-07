@@ -188,6 +188,8 @@ val AudioNormalizationKey = booleanPreferencesKey("audioNormalization")
 val AutoLoadMoreKey = booleanPreferencesKey("autoLoadMore")
 val DisableLoadMoreWhenRepeatAllKey = booleanPreferencesKey("disableLoadMoreWhenRepeatAll")
 val AutoDownloadOnLikeKey = booleanPreferencesKey("autoDownloadOnLike")
+// Playlist the heart button saves to. Empty means the normal liked songs.
+val HeartTargetPlaylistKey = stringPreferencesKey("heartTargetPlaylist")
 val SimilarContent = booleanPreferencesKey("similarContent")
 val AutoSkipNextOnErrorKey = booleanPreferencesKey("autoSkipNextOnError")
 val StopMusicOnTaskClearKey = booleanPreferencesKey("stopMusicOnTaskClear")

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Texts of the built-in web connectors. The bridge_ prefix keeps them apart from Vivi's own. -->
+<resources>
+    <string name="th_bridge_amazon_capture_intro">Amazon Music\'i burada normal şekilde kullanın: Library → Playlists bölümünü açın, çalma listelerinizden birini açın, bir çalma listesi oluşturun, içine bir şarkı ekleyin, kaldırın, bir şarkı arayın; çalma listesinin menüsünden (Play yanındaki üç nokta) yeniden adlandırın ve silin. Oynatıcının yaptığı her çağrı, çerezler veya jetonlar olmadan bu telefondaki bir dosyaya yazılır. Sonra Paylaş\'a dokunup dosyayı geliştiriciye gönderin.</string>
+    <string name="th_bridge_amazon_capture_share">Paylaş</string>
+    <string name="th_bridge_amazon_capture_clear">Temizle</string>
+    <string name="th_bridge_amazon_capture_count">%1$d çağrı yakalandı</string>
+    <string name="th_bridge_disclaimer_title">Sorumluluk reddi</string>
+    <string name="th_bridge_disclaimer_body">Vivi\'un web bağlayıcıları (YouTube Music, Amazon Music, SoundCloud ile Spotify, Apple Music ve Deezer için web oturum açma) bağımsız, açık kaynaklı bir projenin parçasıdır; Google, YouTube, Amazon, Spotify, Apple, Deezer, SoundCloud veya herhangi bir müzik servisiyle bağlantılı değildir, onlar tarafından onaylanmamıştır.\n\nBu servislerle resmi bir API üzerinden değil, kendi web oynatıcılarının kullandığı arayüzler üzerinden konuşurlar. Bu, servislerin hizmet koşullarına aykırıdır. Her an çalışmayı bırakabilirler ve servis, oturum açtığınız hesabı kısıtlayabilir, askıya alabilir veya kapatabilir.\n\nYazılım \"olduğu gibi\", hiçbir garanti olmaksızın sunulur. Devam ederek, yazılımı tamamen kendi sorumluluğunuzda kullandığınızı ve geliştiricinin, hesaplarınızdaki kısıtlamalar veya veri kaybı dahil hiçbir sonuç için sorumluluk kabul etmediğini kabul etmiş olursunuz.</string>
+    <string name="th_bridge_disclaimer_accept">Anladım ve kabul ediyorum</string>
+    <string name="th_bridge_login_hint">Servisin sayfasında oturum açın. Bu ekran kendiliğinden kapanır; kapanmazsa Bitti\'ye dokunun.</string>
+    <string name="th_bridge_login_finishing">Neredeyse bitti: oynatıcı başlıyor, kendiliğinden kapanana kadar bu ekranı açık bırakın. Oynatıcı kimin dinlediğini sorarsa profilinizi seçin.</string>
+    <string name="th_bridge_login_done">Bitti</string>
+    <string name="th_bridge_login_not_signed_in">Henüz oturum yok: önce bu sayfada oturum açmayı tamamlayın.</string>
+    <string name="th_bridge_login_stay">Kal</string>
+    <string name="th_bridge_login_leave">Çık</string>
+    <string name="th_bridge_login_blocked">%1$s bu oturum açmayı olağan dışı etkinlik olarak engelledi. Biraz bekleyin, ardından tercihen Wi-Fi üzerinden ve VPN olmadan tekrar deneyin; bir bulmaca çıkarsa çözün.</string>
+    <string name="th_bridge_language_system">Sistem dili</string>
+    <string name="th_bridge_verify_hint">Google, olağan dışı trafik nedeniyle bu ağ adresini engelledi. Engel, istekler durduktan birkaç dakika sonra kendiliğinden kalkar: Vivi, Google istediği sürece tüm YouTube Music çağrılarını duraklatır. Google\'ın sayfası bir doğrulama sunuyorsa, burada tamamlamak engeli hemen kaldırır.</string>
+    <string name="th_bridge_login_title">YouTube Music\'te oturum aç</string>
+    <string name="th_bridge_amazon_title">Amazon Music (deneysel)</string>
+    <string name="th_bridge_amazon_capture">Trafiği yakala</string>
+    <string name="th_bridge_verify_google">Google ne diyor</string>
+    <string name="th_bridge_capture_site_intro">%1$s\'u burada normal kullan: giriş yap, bir çalma listesi aç, bir şarkı ara, bir test listesi oluştur, şarkı ekle, kaldır, listeyi yeniden adlandır ve sil. %1$s\'a yapılan her çağrı çerezler, tokenlar ve parolalar olmadan bu telefondaki bir dosyaya yazılır. Sonra Paylaş\'a dokun ve dosyayı geliştiriciye gönder.</string>
+    <string name="th_bridge_capture_warning_title">Bu ekran kayıt yapar</string>
+    <string name="th_bridge_capture_warning_body">Bu sitede yaptıkların bu telefondaki bir dosyaya yazılır (parolalar, e-postalar ve tokenlar hariç). Dosyayı yalnızca geliştiriciyle paylaş, asla herkese açık bir issue\'da değil. Bir gün sonra kendiliğinden silinir.</string>
+    <string name="th_bridge_capture_delete_title">Kayıt silinsin mi?</string>
+    <string name="th_bridge_capture_delete_body">Şimdi silmezsen dosya bir gün boyunca bu telefonda kalır.</string>
+    <string name="th_bridge_capture_delete">Sil</string>
+    <string name="th_bridge_capture_keep">Sakla</string>
+    <string name="th_bridge_page_crashed">Sayfa çalışmayı durdurdu ve kapatıldı. Lütfen tekrar dene.</string>
+</resources>

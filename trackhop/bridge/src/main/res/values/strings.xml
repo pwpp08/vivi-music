@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Texts of the built-in web connectors. The bridge_ prefix keeps them apart from Vivi's own. -->
+<resources>
+    <string name="th_bridge_amazon_capture_intro">Use Amazon Music normally here: open Library → Playlists, open one of your playlists, create a playlist, add a song to it, remove it, search for a song; from the playlist\'s menu (the three dots next to Play) rename it and delete it. Every call the player makes is written to a file on this phone, without cookies or tokens. Then tap Share and send the file to the developer.</string>
+    <string name="th_bridge_amazon_capture_share">Share</string>
+    <string name="th_bridge_amazon_capture_clear">Clear</string>
+    <string name="th_bridge_amazon_capture_count">%1$d calls captured</string>
+    <string name="th_bridge_disclaimer_title">Disclaimer</string>
+    <string name="th_bridge_disclaimer_body">Vivi\'s web connectors (YouTube Music, Amazon Music, SoundCloud, and the web sign-in for Spotify, Apple Music and Deezer) are part of an independent, open-source project, not affiliated with, endorsed by or connected to Google, YouTube, Amazon, Spotify, Apple, Deezer, SoundCloud or any music service.\n\nThey talk to these services through the same interfaces their own web players use, not through an official API. This is against their terms of service. They can stop working at any time, and the service may limit, suspend or close the account you sign in with.\n\nThe software is provided \"as is\", without warranty of any kind. By continuing you accept that you use it entirely at your own risk and that the developer accepts no responsibility or liability for any consequence, including restrictions on your accounts or loss of data.</string>
+    <string name="th_bridge_disclaimer_accept">I understand and accept</string>
+    <string name="th_bridge_login_hint">Sign in on the service\'s page. This screen closes on its own; if it does not, tap Done.</string>
+    <string name="th_bridge_login_finishing">Almost done: the player is starting, leave this screen open until it closes by itself. If the player asks who is listening, pick your profile.</string>
+    <string name="th_bridge_login_done">Done</string>
+    <string name="th_bridge_login_not_signed_in">No session yet: complete the sign-in on this page first.</string>
+    <string name="th_bridge_login_stay">Stay</string>
+    <string name="th_bridge_login_leave">Leave</string>
+    <string name="th_bridge_login_blocked">%1$s blocked this sign-in as unusual activity. Wait a while, then try again, preferably on Wi-Fi and without a VPN; if a puzzle appears, solve it.</string>
+    <string name="th_bridge_language_system">System language</string>
+    <string name="th_bridge_verify_hint">Google has blocked this network address for unusual traffic. The block lifts by itself a few minutes after the requests stop: Vivi pauses all YouTube Music calls for as long as Google asks. If Google\'s page offers a verification, completing it here lifts the block at once.</string>
+    <string name="th_bridge_login_title">Sign in to YouTube Music</string>
+    <string name="th_bridge_amazon_title">Amazon Music (experimental)</string>
+    <string name="th_bridge_amazon_capture">Capture traffic</string>
+    <string name="th_bridge_verify_google">What Google says</string>
+    <string name="th_bridge_capture_site_intro">Use %1$s normally here: sign in, open a playlist, search for a song, create a test playlist, add a song, remove it, rename and delete the playlist. Every call to %1$s is written to a file on this phone, without cookies, tokens or passwords. Then tap Share and send the file to the developer.</string>
+    <string name="th_bridge_capture_warning_title">This screen records</string>
+    <string name="th_bridge_capture_warning_body">What you do on this site is written to a file on this phone (passwords, e-mails and tokens removed). Share the file only with the developer, never in a public issue. It is deleted by itself after a day.</string>
+    <string name="th_bridge_capture_delete_title">Delete the capture?</string>
+    <string name="th_bridge_capture_delete_body">The file stays on this phone until a day has passed, unless you delete it now.</string>
+    <string name="th_bridge_capture_delete">Delete</string>
+    <string name="th_bridge_capture_keep">Keep</string>
+    <string name="th_bridge_page_crashed">The page stopped working and was closed. Please try again.</string>
+</resources>

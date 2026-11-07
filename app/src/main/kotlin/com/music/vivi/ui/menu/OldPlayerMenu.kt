@@ -1,5 +1,6 @@
 package com.music.vivi.ui.menu
 
+import com.music.vivi.utils.rememberHearted
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -105,6 +106,7 @@ fun OldPlayerMenu(
     val isListenTogetherGuest = listenTogetherRoleState?.value == RoomRole.GUEST
 
     val currentSong by playerConnection.currentSong.collectAsState(initial = null)
+    val isHearted = rememberHearted(currentSong?.song?.id, currentSong?.song?.liked == true)
     val librarySong by database.song(mediaMetadata.id).collectAsState(initial = null)
     val repeatMode by playerConnection.repeatMode.collectAsState()
     val shuffleModeEnabled by playerConnection.shuffleModeEnabled.collectAsState()
@@ -449,7 +451,7 @@ fun OldPlayerMenu(
                     }
 
                     // Like
-                    val isLiked = currentSong?.song?.liked == true
+                    val isLiked = isHearted
                     add(
                         Material3MenuItemData(
                             title = { Text(stringResource(if (isLiked) R.string.liked else R.string.like)) },

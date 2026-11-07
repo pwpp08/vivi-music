@@ -5,6 +5,8 @@
 
 package com.music.vivi.ui.menu
 
+import com.music.vivi.utils.rememberHeartRouter
+import com.music.vivi.utils.rememberHearted
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Configuration
@@ -108,6 +110,7 @@ fun YouTubeSongMenu(
     val download by LocalDownloadUtil.current.getDownload(song.id).collectAsState(initial = null)
     val coroutineScope = rememberCoroutineScope()
     val syncUtils = LocalSyncUtils.current
+    val heartRouter = rememberHeartRouter()
     val listenTogetherManager = LocalListenTogetherManager.current
     val isPinned by database.speedDialDao.isPinned(song.id).collectAsState(initial = false)
     val (listenInMaps) = rememberPreference(ListenInMapsKey, defaultValue = false)
@@ -222,7 +225,7 @@ fun YouTubeSongMenu(
         trailingContent = {  
             IconButton(  
                 onClick = {  
-                    database.transaction {  
+                    heartRouter.toggle(song.toMediaMetadata()) { database.transaction {  
                         librarySong.let { librarySong ->  
                             val s: SongEntity  
                             if (librarySong == null) {  
@@ -234,12 +237,13 @@ fun YouTubeSongMenu(
                             }  
                             syncUtils.likeSong(s)  
                         }  
-                    }  
+                    } }  
                 },  
             ) {  
+                val hearted = rememberHearted(song.id, librarySong?.song?.liked == true)
                 Icon(  
-                    painter = painterResource(if (librarySong?.song?.liked == true) R.drawable.favorite else R.drawable.favorite_border),  
-                    tint = if (librarySong?.song?.liked == true) MaterialTheme.colorScheme.error else LocalContentColor.current,  
+                    painter = painterResource(if (hearted) R.drawable.favorite else R.drawable.favorite_border),  
+                    tint = if (hearted) MaterialTheme.colorScheme.error else LocalContentColor.current,  
                     contentDescription = null,  
                 )  
             }  

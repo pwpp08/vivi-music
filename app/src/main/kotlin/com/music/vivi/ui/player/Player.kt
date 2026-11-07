@@ -5,6 +5,7 @@
 
 package com.music.vivi.ui.player
 
+import com.music.vivi.utils.rememberHearted
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -344,6 +345,7 @@ fun BottomSheetPlayer(
     val playbackState by playerConnection.playbackState.collectAsState()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val currentSong by playerConnection.currentSong.collectAsState(initial = null)
+    val isHearted = rememberHearted(currentSong?.song?.id, currentSong?.song?.liked == true)
     val automix by playerConnection.service.automixItems.collectAsState()
     val repeatMode by playerConnection.repeatMode.collectAsState()
     val canSkipPrevious by playerConnection.canSkipPrevious.collectAsState()
@@ -1704,7 +1706,7 @@ fun BottomSheetPlayer(
                                 ) {
                                     Icon(
                                         painter = painterResource(
-                                            if (currentSong?.song?.liked == true)
+                                            if (isHearted)
                                                 R.drawable.favorite
                                             else R.drawable.favorite_border
                                         ),
@@ -1817,7 +1819,7 @@ fun BottomSheetPlayer(
                             ) {
                                 Icon(
                                     painter = painterResource(
-                                        if (currentSong?.song?.liked == true)
+                                        if (isHearted)
                                             R.drawable.favorite
                                         else R.drawable.favorite_border
                                     ),

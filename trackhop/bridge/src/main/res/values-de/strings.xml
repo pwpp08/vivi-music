@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Texts of the built-in web connectors. The bridge_ prefix keeps them apart from Vivi's own. -->
+<resources>
+    <string name="th_bridge_amazon_capture_intro">Nutze Amazon Music hier ganz normal: Öffne Bibliothek → Playlists, öffne eine deiner Playlists, erstelle eine Playlist, füge ihr einen Titel hinzu, entferne ihn, suche nach einem Titel. Jeder Aufruf des Players wird ohne Cookies oder Tokens in eine Datei auf diesem Telefon geschrieben. Tippe danach auf Teilen und schicke die Datei an den Entwickler.</string>
+    <string name="th_bridge_amazon_capture_share">Teilen</string>
+    <string name="th_bridge_amazon_capture_clear">Leeren</string>
+    <string name="th_bridge_amazon_capture_count">%1$d Aufrufe aufgezeichnet</string>
+    <string name="th_bridge_disclaimer_title">Haftungsausschluss</string>
+    <string name="th_bridge_disclaimer_body">Die Web-Connectoren von Vivi (YouTube Music, Amazon Music, SoundCloud und die Web-Anmeldung bei Spotify, Apple Music und Deezer) gehören zu einem unabhängigen Open-Source-Projekt und sind weder mit Google, YouTube, Amazon, Spotify, Apple, Deezer, SoundCloud noch mit einem anderen Musikdienst verbunden, von ihnen unterstützt oder autorisiert.\n\nSie kommunizieren mit diesen Diensten über dieselben Schnittstellen wie deren eigene Web-Player, nicht über eine offizielle API. Das verstößt gegen deren Nutzungsbedingungen. Sie können jederzeit aufhören zu funktionieren, und der Dienst kann das Konto, mit dem du dich anmeldest, einschränken, sperren oder schließen.\n\nDie Software wird \"wie besehen\" ohne jegliche Gewährleistung bereitgestellt. Indem du fortfährst, akzeptierst du, sie vollständig auf eigenes Risiko zu nutzen, und dass der Entwickler keinerlei Verantwortung oder Haftung für Folgen übernimmt, einschließlich Einschränkungen deiner Konten oder Datenverlust.</string>
+    <string name="th_bridge_disclaimer_accept">Ich habe verstanden und akzeptiere</string>
+    <string name="th_bridge_login_hint">Melde dich auf der Seite des Dienstes an. Dieser Bildschirm schließt sich von selbst; wenn nicht, tippe auf Fertig.</string>
+    <string name="th_bridge_login_finishing">Fast fertig: Der Player startet, lass diesen Bildschirm offen, bis er sich von selbst schließt. Fragt der Player, wer zuhört, wähle dein Profil.</string>
+    <string name="th_bridge_login_done">Fertig</string>
+    <string name="th_bridge_login_not_signed_in">Noch keine Sitzung: Schließe zuerst die Anmeldung auf dieser Seite ab.</string>
+    <string name="th_bridge_login_stay">Bleiben</string>
+    <string name="th_bridge_login_leave">Verlassen</string>
+    <string name="th_bridge_login_blocked">%1$s hat diese Anmeldung als ungewöhnliche Aktivität blockiert. Warte eine Weile und versuche es dann erneut, am besten im WLAN und ohne VPN; wenn ein Rätsel erscheint, löse es.</string>
+    <string name="th_bridge_language_system">Systemsprache</string>
+    <string name="th_bridge_verify_hint">Google hat die Netzadresse dieses Telefons wegen ungewöhnlichen Verkehrs gesperrt. Die Sperre endet von selbst einige Minuten nachdem die Anfragen aufhören: Vivi setzt alle Aufrufe an YouTube Music so lange aus, wie Google es verlangt. Bietet Googles Seite eine Überprüfung an, hebt sie hier die Sperre sofort auf.</string>
+    <string name="th_bridge_login_title">Bei YouTube Music anmelden</string>
+    <string name="th_bridge_amazon_title">Amazon Music (experimentell)</string>
+    <string name="th_bridge_amazon_capture">Traffic aufzeichnen</string>
+    <string name="th_bridge_verify_google">Was Google sagt</string>
+    <string name="th_bridge_capture_site_intro">Nutze %1$s hier ganz normal: anmelden, eine Playlist öffnen, einen Song suchen, eine Test-Playlist anlegen, einen Song hinzufügen und entfernen, die Playlist umbenennen und löschen. Jeder Aufruf an %1$s wird ohne Cookies, Tokens oder Passwörter in eine Datei auf diesem Handy geschrieben. Dann auf Teilen tippen und die Datei dem Entwickler senden.</string>
+    <string name="th_bridge_capture_warning_title">Diese Ansicht zeichnet auf</string>
+    <string name="th_bridge_capture_warning_body">Was du auf dieser Website tust, wird in eine Datei auf diesem Handy geschrieben (ohne Passwörter, E-Mails und Tokens). Teile die Datei nur mit dem Entwickler, nie in einem öffentlichen Issue. Sie wird nach einem Tag von selbst gelöscht.</string>
+    <string name="th_bridge_capture_delete_title">Mitschnitt löschen?</string>
+    <string name="th_bridge_capture_delete_body">Die Datei bleibt einen Tag auf diesem Handy, außer du löschst sie jetzt.</string>
+    <string name="th_bridge_capture_delete">Löschen</string>
+    <string name="th_bridge_capture_keep">Behalten</string>
+    <string name="th_bridge_page_crashed">Die Seite funktioniert nicht mehr und wurde geschlossen. Versuche es noch einmal.</string>
+</resources>

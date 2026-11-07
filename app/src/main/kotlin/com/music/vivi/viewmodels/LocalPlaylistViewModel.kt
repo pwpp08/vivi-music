@@ -5,6 +5,9 @@
 
 package com.music.vivi.viewmodels
 
+import kotlinx.coroutines.flow.onEach
+import com.music.vivi.utils.ViviPrefCache
+import com.music.vivi.utils.LibraryMemoryCache
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -55,74 +58,85 @@ constructor(
     val playlist =
         database
             .playlist(playlistId)
-            .stateIn(viewModelScope, SharingStarted.Lazily, null)
+            .stateIn(viewModelScope, SharingStarted.Lazily, LibraryMemoryCache.playlist(playlistId))
     val playlistSongs: StateFlow<List<PlaylistSong>> =
         combine(
-            database.playlistSongs(playlistId),
+            database.playlistSongs(playlistId).onEach { LibraryMemoryCache.putSongs(playlistId, it) },
             context.dataStore.data
                 .map { prefs ->
                     val sortType = prefs[PlaylistSongSortTypeKey].toEnum(PlaylistSongSortType.CUSTOM)
                     val sortDescending = prefs[PlaylistSongSortDescendingKey] ?: true
                     val hideVideoSongs = prefs[HideVideoSongsKey] ?: false
-                    val orderOverrideStr = prefs[stringPreferencesKey("playlist_order_${playlistId}_${sortType.name}")]
+                    val orderOverrideStr = prefs[orderOverrideKey(sortType)]
                     OrderConfig(sortType, sortDescending, hideVideoSongs, orderOverrideStr)
                 }.distinctUntilChanged(),
-        ) { songs, (sortType, sortDescending, hideVideoSongs, orderOverrideStr) ->
-            val filteredSongs = if (hideVideoSongs) {
-                songs.filter { !it.song.song.isVideo }
-            } else {
-                songs
-            }
-            val overrideOrderIds = orderOverrideStr?.split(",")?.mapNotNull { it.toIntOrNull() }
-            if (overrideOrderIds != null && overrideOrderIds.isNotEmpty()) {
-                val orderMap = overrideOrderIds.withIndex().associate { it.value to it.index }
-                filteredSongs.sortedBy { orderMap[it.map.id] ?: Int.MAX_VALUE }
-            } else {
-                when (sortType) {
-                    PlaylistSongSortType.CUSTOM -> filteredSongs
-                    PlaylistSongSortType.CREATE_DATE -> filteredSongs.sortedBy { it.map.id }
-                    PlaylistSongSortType.NAME -> {
-                        val collator = Collator.getInstance(Locale.getDefault())
-                        collator.strength = Collator.PRIMARY
-                        filteredSongs.sortedWith(compareBy(collator) { it.song.song.title })
-                    }
-                    PlaylistSongSortType.ARTIST -> {
-                        val collator = Collator.getInstance(Locale.getDefault())
-                        collator.strength = Collator.PRIMARY
-                        filteredSongs
-                            .sortedWith(compareBy(collator) { song -> song.song.artists.joinToString("") { it.name } })
-                            .groupBy { it.song.album?.title }
-                            .flatMap { (_, songsByAlbum) ->
-                                songsByAlbum.sortedBy {
-                                    it.song.artists.joinToString(
-                                        ""
-                                    ) { it.name }
-                                }
-                            }
-                    }
+        ) { songs, config -> applyOrder(songs, config) }
+            .stateIn(viewModelScope, SharingStarted.Lazily, cachedSongs())
 
-                    PlaylistSongSortType.PLAY_TIME -> filteredSongs.sortedBy { it.song.song.totalPlayTime }
-                }.reversed(sortDescending && sortType != PlaylistSongSortType.CUSTOM)
-            }
-        }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    private fun orderOverrideKey(sortType: PlaylistSongSortType) =
+        stringPreferencesKey("playlist_order_${playlistId}_${sortType.name}")
+
+    /** First-frame content: last known songs in the user's current order, or empty before prefs load. */
+    private fun cachedSongs(): List<PlaylistSong> {
+        val cached = LibraryMemoryCache.songsOf(playlistId)
+        if (cached == null || !ViviPrefCache.isInitialized()) return emptyList()
+        val sortType = ViviPrefCache.get(PlaylistSongSortTypeKey).toEnum(PlaylistSongSortType.CUSTOM)
+        return applyOrder(
+            cached,
+            OrderConfig(
+                sortType = sortType,
+                sortDescending = ViviPrefCache.get(PlaylistSongSortDescendingKey) ?: true,
+                hideVideoSongs = ViviPrefCache.get(HideVideoSongsKey) ?: false,
+                orderOverrideStr = ViviPrefCache.get(orderOverrideKey(sortType)),
+            ),
+        )
+    }
+
+    private fun applyOrder(songs: List<PlaylistSong>, config: OrderConfig): List<PlaylistSong> {
+        val (sortType, sortDescending, hideVideoSongs, orderOverrideStr) = config
+        val filteredSongs = if (hideVideoSongs) {
+            songs.filter { !it.song.song.isVideo }
+        } else {
+            songs
+        }
+        val overrideOrderIds = orderOverrideStr?.split(",")?.mapNotNull { it.toIntOrNull() }
+        return if (overrideOrderIds != null && overrideOrderIds.isNotEmpty()) {
+            val orderMap = overrideOrderIds.withIndex().associate { it.value to it.index }
+            filteredSongs.sortedBy { orderMap[it.map.id] ?: Int.MAX_VALUE }
+        } else {
+            when (sortType) {
+                PlaylistSongSortType.CUSTOM -> filteredSongs
+                PlaylistSongSortType.CREATE_DATE -> filteredSongs.sortedBy { it.map.id }
+                PlaylistSongSortType.NAME -> {
+                    val collator = Collator.getInstance(Locale.getDefault())
+                    collator.strength = Collator.PRIMARY
+                    filteredSongs.sortedWith(compareBy(collator) { it.song.song.title })
+                }
+                PlaylistSongSortType.ARTIST -> {
+                    val collator = Collator.getInstance(Locale.getDefault())
+                    collator.strength = Collator.PRIMARY
+                    filteredSongs
+                        .sortedWith(compareBy(collator) { song -> song.song.artists.joinToString("") { it.name } })
+                        .groupBy { it.song.album?.title }
+                        .flatMap { (_, songsByAlbum) ->
+                            songsByAlbum.sortedBy {
+                                it.song.artists.joinToString(
+                                    ""
+                                ) { it.name }
+                            }
+                        }
+                }
+
+                PlaylistSongSortType.PLAY_TIME -> filteredSongs.sortedBy { it.song.song.totalPlayTime }
+            }.reversed(sortDescending && sortType != PlaylistSongSortType.CUSTOM)
+        }
+    }
 
     init {
         viewModelScope.launch {
             // Trigger sync in background if it's a YouTube synced playlist
             playlist.first { it != null }?.playlist?.browseId?.let { browseId ->
                 syncUtils.syncPlaylist(browseId, playlistId)
-            }
-        }
-
-        viewModelScope.launch {
-            val sortedSongs =
-                playlistSongs.first().sortedWith(compareBy({ it.map.position }, { it.map.id }))
-            database.transaction {
-                sortedSongs.forEachIndexed { index, playlistSong ->
-                    if (playlistSong.map.position != index) {
-                        update(playlistSong.map.copy(position = index))
-                    }
-                }
             }
         }
     }

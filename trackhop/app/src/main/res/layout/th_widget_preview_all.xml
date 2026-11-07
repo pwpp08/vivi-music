@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What the launcher shows before the widget draws itself (and in the "Add widget" preview). -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/th_widget_preview_bg">
+    <ImageView
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_gravity="center"
+        android:src="@drawable/th_ic_widget_sync"
+        android:contentDescription="@string/th_widget_all_label" />
+</FrameLayout>
