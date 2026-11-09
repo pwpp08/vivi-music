@@ -1010,7 +1010,54 @@ constructor(
         d
     }
 
-    fun exportSongToPublicStorage(songId: String) {
+    private fun safeExportTitle(title: String, songId: String): String =
+        title
+            .replace(Regex("[\\\\/:*?\"<>|]"), "_")
+            .trim()
+            .ifBlank { songId }
+
+    /** Whether this song was already exported to the phone's music folder (or the chosen export folder) as m4a or mp3. */
+    private fun externalExportExists(safeTitle: String): Boolean {
+        val names = listOf("$safeTitle.m4a", "$safeTitle.mp3")
+        return try {
+            val customFolder = appContext.dataStore[ExportFolderUriKey]?.takeIf { it.isNotBlank() }
+            if (customFolder != null) {
+                val resolver = appContext.contentResolver
+                val treeUri = customFolder.toUri()
+                val treeDocumentId = DocumentsContract.getTreeDocumentId(treeUri)
+                val children = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, treeDocumentId)
+                val found = resolver.query(
+                    children,
+                    arrayOf(DocumentsContract.Document.COLUMN_DISPLAY_NAME, DocumentsContract.Document.COLUMN_SIZE),
+                    null, null, null,
+                )?.use { cursor ->
+                    var hit = false
+                    while (cursor.moveToNext()) {
+                        if (cursor.getString(0) in names && cursor.getLong(1) > 0L) { hit = true; break }
+                    }
+                    hit
+                }
+                if (found != null) return found
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                appContext.contentResolver.query(
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                    arrayOf(MediaStore.Audio.Media._ID),
+                    "(${MediaStore.Audio.Media.DISPLAY_NAME} = ? OR ${MediaStore.Audio.Media.DISPLAY_NAME} = ?) AND ${MediaStore.Audio.Media.RELATIVE_PATH} LIKE ? AND ${MediaStore.Audio.Media.SIZE} > 0",
+                    arrayOf(names[0], names[1], "%ViviMusic%"),
+                    null,
+                )?.use { it.count > 0 } ?: false
+            } else {
+                val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), "ViviMusic")
+                names.any { File(dir, it).let { f -> f.exists() && f.length() > 0L } }
+            }
+        } catch (e: Exception) {
+            Timber.tag("DownloadUtil").w(e, "Could not check for an earlier export of $safeTitle")
+            false
+        }
+    }
+
+    fun exportSongToPublicStorage(songId: String, skipIfExists: Boolean = false) {
         scope.launch(Dispatchers.IO) {
           exportMutex.withLock {
             try {
@@ -1023,10 +1070,8 @@ constructor(
                 val rawMimeType = format?.mimeType ?: "audio/mp4"
                 val isOpusOrWebm = rawMimeType.contains("webm", ignoreCase = true) || rawMimeType.contains("opus", ignoreCase = true)
 
-                val safeTitle = songTitle
-                    .replace(Regex("[\\\\/:*?\"<>|]"), "_")
-                    .trim()
-                    .ifBlank { songId }
+                val safeTitle = safeExportTitle(songTitle, songId)
+                if (skipIfExists && externalExportExists(safeTitle)) return@launch
 
                 val cacheKey = when {
                     downloadCache.keys.contains(songId) -> songId
@@ -1080,7 +1125,15 @@ constructor(
                     return@launch
                 }
 
-                val isMp4 = AudioTagEmbedder.isMp4Header(rawAudio) || !isOpusOrWebm
+                var isMp4 = AudioTagEmbedder.isMp4Header(rawAudio) || !isOpusOrWebm
+                if (!isMp4) {
+                    // Opus does not open in many players: the exported copy becomes an AAC .m4a. The copy kept
+                    // inside the app is untouched. If the phone cannot convert, the Opus file is exported as before.
+                    OpusToM4aTranscoder.transcode(appContext, rawAudio)?.let {
+                        rawAudio = it
+                        isMp4 = true
+                    }
+                }
                 val fileName = if (isMp4) "${safeTitle}.m4a" else "${safeTitle}.opus"
                 val mimeType = if (isMp4) "audio/mp4" else "audio/opus"
 
@@ -1143,8 +1196,8 @@ constructor(
                     val relativePath = "${Environment.DIRECTORY_MUSIC}/ViviMusic"
 
                     val projection = arrayOf(MediaStore.Audio.Media._ID)
-                    val baseSelection = "(${MediaStore.Audio.Media.DISPLAY_NAME} = ? OR ${MediaStore.Audio.Media.DISPLAY_NAME} = ? OR ${MediaStore.Audio.Media.DISPLAY_NAME} = ?) AND ${MediaStore.Audio.Media.RELATIVE_PATH} LIKE ?"
-                    val baseArgs = arrayOf(fileName, safeTitle, "${safeTitle}.oga", "%ViviMusic%")
+                    val baseSelection = "(${MediaStore.Audio.Media.DISPLAY_NAME} = ? OR ${MediaStore.Audio.Media.DISPLAY_NAME} = ? OR ${MediaStore.Audio.Media.DISPLAY_NAME} = ? OR ${MediaStore.Audio.Media.DISPLAY_NAME} = ?) AND ${MediaStore.Audio.Media.RELATIVE_PATH} LIKE ?"
+                    val baseArgs = arrayOf(fileName, safeTitle, "${safeTitle}.oga", "${safeTitle}.opus", "%ViviMusic%")
                     var existingUri: Uri? = null
 
                     resolver.query(
@@ -1199,6 +1252,7 @@ constructor(
                     val musicDir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), "ViviMusic")
                     musicDir.mkdirs()
                     File(musicDir, "${safeTitle}.oga").takeIf { it.exists() }?.delete()
+                    File(musicDir, "${safeTitle}.opus").takeIf { it.exists() && it.name != fileName }?.delete()
                     File(musicDir, safeTitle).takeIf { it.exists() && it.name != fileName }?.delete()
 
                     val targetFile = File(musicDir, fileName)
@@ -1244,7 +1298,7 @@ constructor(
                 null,
             )?.use { cursor ->
                 while (cursor.moveToNext()) {
-                    if (cursor.getString(1) == fileName) {
+                    if (cursor.getString(1) == fileName || cursor.getString(1) == "${fileName.substringBeforeLast('.')}.opus") {
                         runCatching {
                             DocumentsContract.deleteDocument(
                                 resolver,
@@ -1272,7 +1326,7 @@ constructor(
         scope.launch(Dispatchers.IO) {
             val downloadedSongs = database.downloadedSongsByNameAsc().firstOrNull() ?: emptyList()
             for (song in downloadedSongs) {
-                exportSongToPublicStorage(song.id)
+                exportSongToPublicStorage(song.id, skipIfExists = true)
             }
         }
     }
@@ -1284,10 +1338,13 @@ constructor(
     fun exportAlbumToPublicStorage(songIds: List<String>) {
         scope.launch(Dispatchers.IO) {
             songIds.forEach { songId ->
+                // Already on the phone from an earlier export: neither converted nor downloaded again.
+                val title = database.song(songId).firstOrNull()?.song?.title
+                if (title != null && externalExportExists(safeExportTitle(title, songId))) return@forEach
                 val isDownloaded = downloads.value[songId]?.state == Download.STATE_COMPLETED ||
                         database.song(songId).firstOrNull()?.song?.let { it.dateDownload != null || it.isDownloaded } == true
                 if (isDownloaded) {
-                    exportSongToPublicStorage(songId)
+                    exportSongToPublicStorage(songId, skipIfExists = true)
                 } else {
                     pendingExternalExportSongIds.add(songId)
                     registerBatchDownload(listOf(songId))
