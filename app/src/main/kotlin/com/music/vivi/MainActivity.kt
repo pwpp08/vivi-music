@@ -293,6 +293,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        applyBluetoothBaseVolume()
         // Request notification permission on Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -311,6 +312,36 @@ class MainActivity : ComponentActivity() {
             serviceConnection,
             BIND_AUTO_CREATE
         )
+    }
+
+    /**
+     * When the app is opened while Bluetooth headphones are the audio output, set the music volume to the level chosen
+     * in Player settings, so it never starts out painfully loud (or silent) after the last use.
+     */
+    private fun applyBluetoothBaseVolume() {
+        try {
+            if (!dataStore.get(com.music.vivi.constants.BluetoothBaseVolumeEnabledKey, false)) return
+            val percent = dataStore.get(com.music.vivi.constants.BluetoothBaseVolumeKey, 40).coerceIn(0, 100)
+            val audioManager = getSystemService(AUDIO_SERVICE) as? android.media.AudioManager ?: return
+            val bluetoothTypes = buildSet {
+                add(android.media.AudioDeviceInfo.TYPE_BLUETOOTH_A2DP)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    add(android.media.AudioDeviceInfo.TYPE_BLE_HEADSET)
+                    add(android.media.AudioDeviceInfo.TYPE_BLE_SPEAKER)
+                }
+            }
+            val onBluetooth = audioManager.getDevices(android.media.AudioManager.GET_DEVICES_OUTPUTS)
+                .any { it.type in bluetoothTypes }
+            if (!onBluetooth) return
+            val stream = android.media.AudioManager.STREAM_MUSIC
+            val max = audioManager.getStreamMaxVolume(stream)
+            val target = Math.round(max * percent / 100f)
+            if (audioManager.getStreamVolume(stream) != target) {
+                audioManager.setStreamVolume(stream, target, 0)
+            }
+        } catch (e: Exception) {
+            timber.log.Timber.w(e, "Could not apply Bluetooth base volume")
+        }
     }
 
     override fun onStop() {

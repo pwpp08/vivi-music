@@ -187,7 +187,11 @@ constructor(
 
             val knownContentLength = database.getSongByIdBlocking(mediaId)?.format?.contentLength
                 ?: ContentMetadata.getContentLength(playerCache.getContentMetadata(mediaId)).takeIf { it > 0L }
-            if (knownContentLength != null && knownContentLength > 0L && playerCache.isCached(mediaId, 0, knownContentLength)) {
+            val playerCacheLength = ContentMetadata.getContentLength(playerCache.getContentMetadata(mediaId))
+            if (knownContentLength != null && knownContentLength > 0L &&
+                (playerCacheLength <= 0L || playerCacheLength == knownContentLength) &&
+                playerCache.isCached(mediaId, 0, knownContentLength)
+            ) {
                 Timber.tag("DownloadDiagnostics").d("Stream already 100% cached in playerCache for $mediaId ($knownContentLength bytes) - copying directly")
                 return@Factory dataSpec
             }
@@ -295,6 +299,20 @@ constructor(
             var format = activePlaybackData.format
 
             val actualContentLength = format.contentLength?.takeIf { it > 0L } ?: 0L
+
+            // The download reads through the player cache. If that holds part of a different file (another itag or
+            // length), the download would be a splice of two files and fail to play halfway, so drop those bytes.
+            run {
+                val previousItag = database.getSongByIdBlocking(mediaId)?.format?.itag
+                val cachedLength = ContentMetadata.getContentLength(playerCache.getContentMetadata(mediaId))
+                val hasCachedBytes = playerCache.getCachedSpans(mediaId).isNotEmpty()
+                val formatChanged = previousItag != null && previousItag != format.itag
+                val lengthChanged = cachedLength > 0L && actualContentLength > 0L && cachedLength != actualContentLength
+                if (hasCachedBytes && (formatChanged || lengthChanged)) {
+                    Timber.tag("DownloadDiagnostics").w("Player cache for $mediaId holds another file (itag $previousItag -> ${format.itag}); clearing before download")
+                    runCatching { playerCache.removeResource(mediaId) }
+                }
+            }
 
             database.query {
                 upsert(

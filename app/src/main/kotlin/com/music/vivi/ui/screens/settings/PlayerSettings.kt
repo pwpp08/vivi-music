@@ -218,6 +218,14 @@ fun PlayerSettings(
         ResumeOnBluetoothConnectKey,
         defaultValue = false
     )
+    val (bluetoothBaseVolumeEnabled, onBluetoothBaseVolumeEnabledChange) = rememberPreference(
+        com.music.vivi.constants.BluetoothBaseVolumeEnabledKey,
+        defaultValue = false
+    )
+    val (bluetoothBaseVolume, onBluetoothBaseVolumeChange) = rememberPreference(
+        com.music.vivi.constants.BluetoothBaseVolumeKey,
+        defaultValue = 40
+    )
     val (keepScreenOn, onKeepScreenOnChange) = rememberPreference(
         KeepScreenOn,
         defaultValue = false
@@ -976,6 +984,46 @@ fun PlayerSettings(
                         )
                     },
                     onClick = { onResumeOnBluetoothConnectChange(!resumeOnBluetoothConnect) }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.bluetooth),
+                    modifier = Modifier.settingTarget("bluetooth_base_volume", scrollState),
+                    title = { Text(stringResource(R.string.bluetooth_base_volume)) },
+                    description = {
+                        Column {
+                            Text(
+                                if (bluetoothBaseVolumeEnabled) {
+                                    stringResource(R.string.bluetooth_base_volume_desc, bluetoothBaseVolume)
+                                } else {
+                                    stringResource(R.string.bluetooth_base_volume_off_desc)
+                                }
+                            )
+                            if (bluetoothBaseVolumeEnabled) {
+                                Slider(
+                                    value = bluetoothBaseVolume.toFloat(),
+                                    onValueChange = { onBluetoothBaseVolumeChange(it.toInt()) },
+                                    valueRange = 0f..100f,
+                                    steps = 19
+                                )
+                            }
+                        }
+                    },
+                    trailingContent = {
+                        Switch(
+                            checked = bluetoothBaseVolumeEnabled,
+                            onCheckedChange = onBluetoothBaseVolumeEnabledChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (bluetoothBaseVolumeEnabled) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { onBluetoothBaseVolumeEnabledChange(!bluetoothBaseVolumeEnabled) }
                 ),
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.screenshot),

@@ -56,6 +56,7 @@ import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR
 import androidx.media3.datasource.cache.ContentMetadata
 import androidx.media3.datasource.cache.SimpleCache
+import androidx.media3.exoplayer.offline.Download
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
@@ -268,6 +269,9 @@ class MusicService :
 
     @Inject
     lateinit var listenTogetherManager: com.music.vivi.listentogether.ListenTogetherManager
+
+    @Inject
+    lateinit var downloadUtil: DownloadUtil
 
     private lateinit var audioManager: AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
@@ -551,6 +555,9 @@ class MusicService :
 
     // URL cache for stream URLs - class-level so it can be invalidated on errors
     internal val songUrlCache = StreamUrlCache()
+
+    // The itag of the file each song is currently being streamed from, to notice a different file mid-song.
+    private val resolvedItags = java.util.concurrent.ConcurrentHashMap<String, Int>()
     val currentStreamClient = MutableStateFlow<String?>(null)
 
     // Flag to bypass cache when quality changes - forces fresh stream fetch
@@ -2721,6 +2728,10 @@ class MusicService :
                 (error.cause as? PlaybackException)?.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED
     }
 
+    private fun isParsingError(error: PlaybackException): Boolean =
+        error.errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED ||
+            error.errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED
+
     private fun isRemotePlaybackError(error: PlaybackException): Boolean =
         error.errorCode == PlaybackException.ERROR_CODE_REMOTE_ERROR
 
@@ -2769,6 +2780,9 @@ class MusicService :
         // Aggressive cache clearing for all playback errors
         if (mediaId != null) {
             performAggressiveCacheClear(mediaId)
+            if (isParsingError(error)) {
+                purgeBrokenDownload(mediaId)
+            }
         }
 
         // Handle specific error types with strict strategies
@@ -2829,6 +2843,71 @@ class MusicService :
     }
 
     /**
+     * Both caches are keyed by the video id only, while YouTube can serve the same song as different files (AAC in MP4,
+     * Opus in WebM, different bitrates). If bytes of one file are still cached when another one is streamed, the cache
+     * fills the gaps with the new file and the player reads a splice of the two: that shows up as "Skipping atom with
+     * length > 2147483647" or as a song that just stops halfway. Drop partial data that clearly belongs to another file.
+     */
+    private fun purgeMismatchedCachedAudio(mediaId: String, previousItag: Int?, newItag: Int, newLength: Long?) {
+        val formatChanged = previousItag != null && previousItag != newItag
+        fun isMismatched(cache: SimpleCache): Boolean {
+            if (cache.getCachedSpans(mediaId).isEmpty()) return false
+            val cachedLength = ContentMetadata.getContentLength(cache.getContentMetadata(mediaId))
+            val lengthChanged = cachedLength > 0L && newLength != null && newLength > 0L && cachedLength != newLength
+            return formatChanged || lengthChanged
+        }
+        try {
+            if (isMismatched(playerCache)) {
+                Timber.tag(TAG).w("Cached stream bytes for $mediaId belong to another file (itag $previousItag -> $newItag); clearing player cache")
+                playerCache.removeResource(mediaId)
+            }
+            if (isMismatched(downloadCache) && !isDownloadInProgress(mediaId)) {
+                // We only get here when the download is not complete, so it has to be fetched again anyway.
+                Timber.tag(TAG).w("Partial download of $mediaId belongs to another file; removing it and downloading again")
+                downloadCache.removeResource(mediaId)
+                redownloadIfDownloaded(mediaId)
+            }
+        } catch (e: Exception) {
+            Timber.tag(TAG).e(e, "Failed to purge mismatched cache for $mediaId")
+        }
+    }
+
+    private fun isDownloadInProgress(mediaId: String): Boolean = try {
+        val state = downloadUtil.downloadManager.downloadIndex.getDownload(mediaId)?.state
+        state == Download.STATE_DOWNLOADING || state == Download.STATE_QUEUED || state == Download.STATE_RESTARTING
+    } catch (_: Exception) {
+        false
+    }
+
+    private fun redownloadIfDownloaded(mediaId: String) {
+        try {
+            val download = downloadUtil.downloadManager.downloadIndex.getDownload(mediaId) ?: return
+            val title = download.request.data.takeIf { it.isNotEmpty() }?.let { String(it) }
+                ?: currentSong.value?.song?.title?.takeIf { currentSong.value?.id == mediaId }
+                ?: mediaId
+            downloadUtil.reDownloadSong(mediaId, title)
+        } catch (e: Exception) {
+            Timber.tag(TAG).e(e, "Failed to schedule re-download for $mediaId")
+        }
+    }
+
+    /**
+     * A container that cannot be parsed in the middle of a song means the cached or downloaded bytes are broken. The
+     * player cache is always cleared on errors; a broken download has to go too, otherwise every retry reads the same
+     * bad bytes and Retry can never fix it.
+     */
+    private fun purgeBrokenDownload(mediaId: String) {
+        try {
+            if (downloadCache.getCachedSpans(mediaId).isEmpty() || isDownloadInProgress(mediaId)) return
+            Timber.tag(TAG).w("Downloaded file for $mediaId cannot be parsed; removing it, streaming instead and downloading again")
+            downloadCache.removeResource(mediaId)
+            redownloadIfDownloaded(mediaId)
+        } catch (e: Exception) {
+            Timber.tag(TAG).e(e, "Failed to remove broken download for $mediaId")
+        }
+    }
+
+    /**
      * Performs aggressive cache clearing for a media item.
      * Clears both player cache and download cache, plus URL cache.
      */
@@ -2867,12 +2946,14 @@ class MusicService :
         player.stop()
 
         // Clear all caches synchronously on IO — must finish before prepare()
+        val resumePosition = player.currentPosition
         runBlocking(Dispatchers.IO) {
             performAggressiveCacheClear(mediaId)
+            purgeBrokenDownload(mediaId)
         }
 
-        // Now safe to restart — ExoPlayer will fetch a fresh stream
-        player.seekTo(0)
+        // Now safe to restart — ExoPlayer will fetch a fresh stream, continuing where the song broke off
+        player.seekTo(resumePosition)
         player.prepare()
         player.play()
     }
@@ -3421,6 +3502,12 @@ class MusicService :
             }
             run {
                 val format = nonNullPlayback.format
+                val previousItag = runBlocking(Dispatchers.IO) { database.format(mediaId).firstOrNull()?.itag }
+                purgeMismatchedCachedAudio(mediaId, previousItag, format.itag, format.contentLength)
+                val itagInUse = resolvedItags.put(mediaId, format.itag)
+                // The URL expired mid-song and this time YouTube handed out a different file. Reading on at the old
+                // byte offset would feed the decoder bytes from the middle of another file.
+                val formatSwitchedMidSong = dataSpec.position > 0L && itagInUse != null && itagInUse != format.itag
                 val loudnessDb = nonNullPlayback.audioConfig?.loudnessDb
                 val perceptualLoudnessDb = nonNullPlayback.audioConfig?.perceptualLoudnessDb
 
@@ -3466,6 +3553,15 @@ class MusicService :
                     useRangeChunks = nonNullPlayback.useRangeChunks,
                     expectedGeneration = cacheGeneration,
                 )
+
+                if (formatSwitchedMidSong) {
+                    Timber.tag(TAG).w("Stream for $mediaId switched from itag $itagInUse to ${format.itag} mid-song; restarting from the same position")
+                    throw PlaybackException(
+                        "Stream format changed mid-song",
+                        null,
+                        PlaybackException.ERROR_CODE_IO_UNSPECIFIED,
+                    )
+                }
 
                 return@Factory dataSpec.withResolvedStream(
                     CachedStreamUrl(
@@ -3819,6 +3915,36 @@ class MusicService :
     ) {
         if (reason == Player.DISCONTINUITY_REASON_SEEK) {
             scheduleCrossfade()
+        }
+        if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION && !isCrossfading) {
+            handlePossiblePrematureEnd(oldPosition)
+        }
+    }
+
+    // Songs that were already given a second chance after ending early, so a file that really is shorter than its
+    // listed duration can't loop forever.
+    private val prematureEndRetried = mutableSetOf<String>()
+
+    private fun handlePossiblePrematureEnd(oldPosition: Player.PositionInfo) {
+        val mediaId = oldPosition.mediaItem?.mediaId ?: return
+        val endedAt = oldPosition.positionMs
+        scope.launch {
+            val listedDurationMs = withContext(Dispatchers.IO) {
+                database.song(mediaId).firstOrNull()?.song?.duration?.takeIf { it > 0 }?.times(1000L)
+            } ?: return@launch
+            if (listedDurationMs < 30_000L || endedAt >= listedDurationMs - 15_000L) return@launch
+            if (!prematureEndRetried.add(mediaId)) return@launch
+            val index = oldPosition.mediaItemIndex
+            if (index == C.INDEX_UNSET || index >= player.mediaItemCount ||
+                player.getMediaItemAt(index).mediaId != mediaId
+            ) return@launch
+            Timber.tag(TAG).w("$mediaId ended at ${endedAt}ms of ${listedDurationMs}ms; data is cut off, refetching and resuming")
+            withContext(Dispatchers.IO) {
+                performAggressiveCacheClear(mediaId)
+                purgeBrokenDownload(mediaId)
+            }
+            player.seekTo(index, endedAt)
+            player.prepare()
         }
     }
 

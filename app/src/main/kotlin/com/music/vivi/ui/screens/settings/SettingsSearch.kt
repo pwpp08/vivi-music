@@ -644,6 +644,15 @@ private fun buildSettingSearchIndex(context: Context): List<SettingSearchEntry> 
             iconRes = R.drawable.earbud_case
         ),
         SettingSearchEntry(
+            title = "Bluetooth base volume",
+            description = "Set a fixed volume when you open the app on Bluetooth headphones",
+            category = "Playback",
+            route = "settings/player",
+            settingKey = "bluetooth_base_volume",
+            keywords = listOf("bluetooth", "volume", "earbuds", "headphones", "loud", "base volume", "default volume"),
+            iconRes = R.drawable.earbud_case
+        ),
+        SettingSearchEntry(
             title = "Pause on mute",
             description = "Pause playback when device media volume is set to zero",
             category = "Playback",
