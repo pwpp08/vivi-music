@@ -510,7 +510,7 @@ class ThumbnailDiskCacheInterceptor : Interceptor {
             request
         }
         if (!App.isInternetConnected()) {
-            val offlineBitmap = tryFindDownloadedArtwork(request.data)
+            val offlineBitmap = kotlinx.coroutines.withContext(Dispatchers.IO) { tryFindDownloadedArtwork(request.data) }
             if (offlineBitmap != null) {
                 return coil3.request.SuccessResult(
                     image = offlineBitmap.asImage(),
@@ -521,7 +521,7 @@ class ThumbnailDiskCacheInterceptor : Interceptor {
         }
         val result = chain.withRequest(modifiedRequest).proceed()
         if (result is coil3.request.ErrorResult) {
-            val fallbackBitmap = tryFindDownloadedArtwork(request.data)
+            val fallbackBitmap = kotlinx.coroutines.withContext(Dispatchers.IO) { tryFindDownloadedArtwork(request.data) }
             if (fallbackBitmap != null) {
                 return coil3.request.SuccessResult(
                     image = fallbackBitmap.asImage(),
@@ -594,6 +594,8 @@ private fun tryFindDownloadedArtwork(data: Any?): Bitmap? {
             val files = musicDir.listFiles()
             if (files != null) {
                 for (file in files) {
+                    // Opening a file to read its tags is slow; skip every file whose name can't match first.
+                    if (!file.name.contains(videoId!!, ignoreCase = true)) continue
                     if (file.isFile && (file.extension.equals("m4a", true) || file.extension.equals("opus", true) || file.extension.equals("mp3", true))) {
                         val mmr = MediaMetadataRetriever()
                         try {

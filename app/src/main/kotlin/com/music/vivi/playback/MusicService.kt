@@ -2781,7 +2781,8 @@ class MusicService :
         if (mediaId != null) {
             performAggressiveCacheClear(mediaId)
             if (isParsingError(error)) {
-                purgeBrokenDownload(mediaId)
+                // Cache and download-index access is disk work; keep it off the main thread.
+                scope.launch(Dispatchers.IO) { purgeBrokenDownload(mediaId) }
             }
         }
 
