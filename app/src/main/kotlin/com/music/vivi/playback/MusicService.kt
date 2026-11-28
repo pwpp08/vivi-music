@@ -127,6 +127,7 @@ import com.music.vivi.constants.PersistentShuffleAcrossQueuesKey
 import com.music.vivi.constants.PlayerVolumeKey
 import com.music.vivi.constants.RememberShuffleAndRepeatKey
 import com.music.vivi.constants.RepeatModeKey
+import com.music.vivi.constants.ScreenOffVolumeSkipKey
 import com.music.vivi.constants.ResumeOnBluetoothConnectKey
 import com.music.vivi.constants.ScrobbleDelayPercentKey
 import com.music.vivi.constants.ScrobbleDelaySecondsKey
@@ -512,6 +513,22 @@ class MusicService :
 
     lateinit var player: ExoPlayer
         private set
+
+    // What the media session sees: the player, plus pocket volume-key handling while the screen is off.
+    private lateinit var sessionPlayer: PocketVolumeSessionPlayer
+
+    private fun createSessionPlayer(target: Player) = PocketVolumeSessionPlayer(
+        player = target,
+        context = this,
+        onSkipNext = { if (player.hasNextMediaItem()) player.seekToNext() },
+        onSkipPrevious = { if (player.currentPosition > 3000L) player.seekTo(0) else player.seekToPrevious() },
+    )
+
+    private fun updatePocketVolumeKeys(screenOff: Boolean) {
+        if (!::sessionPlayer.isInitialized) return
+        sessionPlayer.setRemoteVolumeKeys(screenOff && dataStore.get(ScreenOffVolumeSkipKey, false))
+    }
+
     private var secondaryPlayer: ExoPlayer? = null
     private var fadingPlayer: ExoPlayer? = null
     private var isCrossfading = false
@@ -580,6 +597,7 @@ class MusicService :
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
                 Intent.ACTION_SCREEN_OFF -> {
+                    updatePocketVolumeKeys(screenOff = true)
                     if (!player.isPlaying) {
                         scope.launch(Dispatchers.IO) {
                             discordRpc?.closeRPC()
@@ -587,6 +605,7 @@ class MusicService :
                     }
                 }
                 Intent.ACTION_SCREEN_ON -> {
+                    updatePocketVolumeKeys(screenOff = false)
                     if (player.isPlaying) {
                         scope.launch {
                             currentSong.value?.let { song ->
@@ -689,7 +708,7 @@ class MusicService :
         }
         mediaSession =
             MediaLibrarySession
-                .Builder(this, player, mediaLibrarySessionCallback)
+                .Builder(this, createSessionPlayer(player).also { sessionPlayer = it }, mediaLibrarySessionCallback)
                 .setSessionActivity(
                     PendingIntent.getActivity(
                         this,
@@ -4095,7 +4114,10 @@ class MusicService :
         sleepTimer.player = player
 
         try {
-            (mediaSession as MediaSession).player = player
+            val pocketKeys = sessionPlayer.remoteVolumeKeys
+            sessionPlayer = createSessionPlayer(player)
+            (mediaSession as MediaSession).player = sessionPlayer
+            sessionPlayer.setRemoteVolumeKeys(pocketKeys)
         } catch (e: Exception) {
             timber.log.Timber.e(e, "Failed to swap player in MediaSession")
         }
