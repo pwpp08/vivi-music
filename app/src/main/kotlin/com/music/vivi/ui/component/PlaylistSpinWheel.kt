@@ -113,6 +113,9 @@ private const val VISIBLE_HALF = 4
 // animation without a visible jump in speed.
 private val CubicOut = Easing { f -> 1f - (1f - f) * (1f - f) * (1f - f) }
 
+// Emphasized decelerate: the cover leaves the wheel quickly and settles softly onto the player's artwork.
+private val MorphEasing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
+
 // Fast kick, long and silky deceleration — used for the "Spin" button.
 private val SpinEasing = CubicBezierEasing(0.25f, 0.6f, 0.1f, 1f)
 
@@ -157,6 +160,8 @@ fun PlaylistSpinWheelDialog(
     var rootSize by remember { mutableStateOf(IntSize.Zero) }
     val zoom = remember { Animatable(0f) }
     val overlayAlpha = remember { Animatable(1f) }
+    // Fades the wheel and its backdrop away while the artwork morphs, revealing the player underneath.
+    val exit = remember { Animatable(0f) }
     val playerSheet = LocalPlayerBottomSheetState.current
 
     val centerIndex by remember { derivedStateOf { position.roundToInt() } }
@@ -187,19 +192,22 @@ fun PlaylistSpinWheelDialog(
             }
     }
 
-    // Once a song has been picked: let the result sink in, zoom its artwork to full screen while the player sheet opens
-    // underneath, then fade the overlay away so the now playing view takes over.
+    // Once a song has been picked: let the result sink in, then open the player underneath and morph the picked cover
+    // from the wheel onto the player's artwork while the wheel fades away, so the cover lands exactly where the now
+    // playing view shows it. Finally the overlay dissolves into the real artwork.
     LaunchedEffect(landedToken) {
         if (landedToken == 0) {
             zoom.snapTo(0f)
             overlayAlpha.snapTo(1f)
+            exit.snapTo(0f)
             return@LaunchedEffect
         }
-        delay(450)
+        delay(380)
         playerSheet?.expandSoft()
-        zoom.animateTo(1f, tween(520, easing = FastOutSlowInEasing))
-        delay(250)
-        overlayAlpha.animateTo(0f, tween(260))
+        launch { exit.animateTo(1f, tween(520, delayMillis = 120, easing = FastOutSlowInEasing)) }
+        zoom.animateTo(1f, tween(680, easing = MorphEasing))
+        delay(220)
+        overlayAlpha.animateTo(0f, tween(220))
         onDismiss()
     }
 
@@ -281,10 +289,20 @@ fun PlaylistSpinWheelDialog(
         ),
     ) {
         val scrimColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface
+        val dialogView = LocalView.current
+        LaunchedEffect(dialogView) {
+            // The dialog window dims what's behind it by itself; the wheel has its own backdrop, and the dim would
+            // stay on top of the player until the very end of the morph.
+            (dialogView.parent as? androidx.compose.ui.window.DialogWindowProvider)?.window?.apply {
+                setDimAmount(0f)
+                clearFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            }
+        }
         Box(modifier = Modifier.fillMaxSize().onSizeChanged { rootSize = it }) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .graphicsLayer { alpha = 1f - exit.value }
                 .background(scrimColor.copy(alpha = 0.96f * intro.value))
                 .statusBarsPadding()
                 .navigationBarsPadding(),
@@ -371,6 +389,7 @@ fun PlaylistSpinWheelDialog(
                         flingTo(velocityCards)
                     },
                     onCenterBounds = { centerBounds = it },
+                    hideLandedCard = { zoom.value > 0f },
                     onCardClick = { k ->
                         val relative = k - position.roundToInt()
                         if (relative == 0) {
@@ -422,19 +441,35 @@ fun PlaylistSpinWheelDialog(
         if (landed >= 0 && from != null && zoom.value > 0f && rootSize != IntSize.Zero) {
             val t = zoom.value
             val density = LocalDensity.current
-            val width = lerp(from.width, rootSize.width.toFloat(), t)
-            val height = lerp(from.height, rootSize.height.toFloat(), t)
-            val x = lerp(from.left, 0f, t)
-            val y = lerp(from.top, 0f, t)
-            val radius = with(density) { lerp(24.dp.toPx(), 0f, t).toDp() }
+            val screenW = rootSize.width.toFloat()
+            val screenH = rootSize.height.toFloat()
+            // Where the open player draws its artwork; before the player has ever been opened, use where it usually is.
+            val target = com.music.vivi.ui.player.PlayerArtworkBounds.rect ?: run {
+                val side = screenW * 0.815f
+                val left = (screenW - side) / 2f
+                val top = screenH * 0.157f
+                Rect(left, top, left + side, top + side)
+            }
+            val targetRadius = com.music.vivi.ui.player.PlayerArtworkBounds.cornerRadiusPx
+                .takeIf { com.music.vivi.ui.player.PlayerArtworkBounds.rect != null }
+                ?: with(density) { 12.dp.toPx() }
+            val startRadius = with(density) { 24.dp.toPx() } * 1.12f
+            val left = lerp(from.left, target.left, t)
+            val top = lerp(from.top, target.top, t)
+            val width = lerp(from.width, target.width, t)
+            val height = lerp(from.height, target.height, t)
+            val radius = with(density) { lerp(startRadius, targetRadius, t).toDp() }
+            // A gentle lift in the middle of the flight gives the cover some depth.
+            val lift = with(density) { (24f * 4f * t * (1f - t)).dp }
             Box(
                 modifier = Modifier
-                    .offset { IntOffset(x.roundToInt(), y.roundToInt()) }
+                    .offset { IntOffset(left.roundToInt(), top.roundToInt()) }
                     .size(
                         width = with(density) { width.toDp() },
                         height = with(density) { height.toDp() },
                     )
                     .graphicsLayer { alpha = overlayAlpha.value }
+                    .shadow(lift, RoundedCornerShape(radius), clip = false)
                     .clip(RoundedCornerShape(radius))
                     .background(MaterialTheme.colorScheme.surfaceContainerHigh),
             ) {
@@ -507,6 +542,7 @@ private fun WheelOfCovers(
     onDrag: (deltaCards: Float) -> Unit,
     onDragStop: (velocityCards: Float) -> Unit,
     onCenterBounds: (Rect) -> Unit,
+    hideLandedCard: () -> Boolean,
     onCardClick: (card: Int) -> Unit,
 ) {
     val density = LocalDensity.current
@@ -572,7 +608,8 @@ private fun WheelOfCovers(
                                 scaleX = scale
                                 scaleY = scale
                                 val edge = ((abs(relative) - (VISIBLE_HALF - 1.4f)) / 1.4f).coerceIn(0f, 1f)
-                                alpha = (1f - edge) * intro
+                                // The picked cover is flying to the player as an overlay; don't draw it twice.
+                                alpha = if (isLanded && hideLandedCard()) 0f else (1f - edge) * intro
                             },
                     ) {
                         WheelCard(

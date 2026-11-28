@@ -58,6 +58,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
@@ -740,9 +742,18 @@ private fun ThumbnailItem(
                 ),
             contentAlignment = Alignment.Center
         ) {
+            val sheetState = com.music.vivi.LocalPlayerBottomSheetState.current
+            val density = androidx.compose.ui.platform.LocalDensity.current
             Box(
                 modifier = Modifier
                     .size(dimensions.thumbnailSize)
+                    .onGloballyPositioned { coordinates ->
+                        // Remember where the artwork sits in the fully open player, for the spin wheel's morph.
+                        if (isCurrentItem && !isLandscape && sheetState?.isExpanded == true && coordinates.isAttached) {
+                            PlayerArtworkBounds.rect = coordinates.boundsInWindow()
+                            PlayerArtworkBounds.cornerRadiusPx = with(density) { dimensions.cornerRadius.toPx() }
+                        }
+                    }
                     .clip(shape)
                     .graphicsLayer {
                         rotationZ = -rotation

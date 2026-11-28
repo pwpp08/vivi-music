@@ -1588,6 +1588,7 @@ class MusicService :
 
         currentQueue = queue
         queueTitle = null
+        pendingPlayNext.clear()
         val persistShuffleAcrossQueues = dataStore.get(PersistentShuffleAcrossQueuesKey, false)
         val previousShuffleEnabled = player.shuffleModeEnabled
         if (!persistShuffleAcrossQueues) {
@@ -1854,15 +1855,86 @@ class MusicService :
         automixItems.value = emptyList()
     }
 
-    private var consecutivePlayNextCount = 0
+    // Songs queued with "Play next" that haven't started yet, in the order they were added. They always play right
+    // after the current song, one after the other, whatever else gets added to the queue in the meantime.
+    private val pendingPlayNext = mutableListOf<String>()
+
+    /** Queue positions of [pendingPlayNext], in play order, searched from just after the current song. */
+    private fun pendingPlayNextIndices(): List<Int> {
+        val count = player.mediaItemCount
+        val current = player.currentMediaItemIndex
+        if (count == 0 || pendingPlayNext.isEmpty()) return emptyList()
+        val searchOrder = ((current + 1) until count) + (0 until current.coerceAtLeast(0))
+        val used = mutableSetOf<Int>()
+        val found = mutableListOf<Int>()
+        val stillQueued = mutableListOf<String>()
+        for (id in pendingPlayNext) {
+            val index = searchOrder.firstOrNull { it !in used && player.getMediaItemAt(it).mediaId == id } ?: continue
+            used.add(index)
+            found.add(index)
+            stillQueued.add(id)
+        }
+        if (stillQueued.size != pendingPlayNext.size) {
+            // Songs removed from the queue by hand are no longer waiting.
+            pendingPlayNext.clear()
+            pendingPlayNext.addAll(stillQueued)
+        }
+        return found
+    }
+
+    /**
+     * With shuffle on, the queue plays in shuffle order, and anything added later (more songs loaded for a radio or a
+     * long playlist) is dropped into it at random spots, also between the play-next songs. Rebuild the order as:
+     * everything already played, the current song, the play-next songs in order, then the rest as it was.
+     */
+    private fun enforcePlayNextOrder() {
+        if (!player.shuffleModeEnabled || pendingPlayNext.isEmpty()) return
+        val timeline = player.currentTimeline
+        if (timeline.isEmpty) return
+        val size = timeline.windowCount
+        val current = player.currentMediaItemIndex
+        if (current !in 0 until size) return
+        val block = pendingPlayNextIndices()
+        if (block.isEmpty()) return
+
+        val after = mutableListOf<Int>()
+        var idx = current
+        while (true) {
+            idx = timeline.getNextWindowIndex(idx, Player.REPEAT_MODE_OFF, true)
+            if (idx == C.INDEX_UNSET || idx == current) break
+            after.add(idx)
+        }
+        if (after.take(block.size) == block) return // already in the right order; also stops timeline-change loops
+
+        val before = mutableListOf<Int>()
+        idx = current
+        while (true) {
+            idx = timeline.getPreviousWindowIndex(idx, Player.REPEAT_MODE_OFF, true)
+            if (idx == C.INDEX_UNSET || idx == current) break
+            before.add(idx)
+        }
+        before.reverse()
+
+        val blockSet = block.toSet()
+        val order = ArrayList<Int>(size)
+        before.filterTo(order) { it !in blockSet }
+        order.add(current)
+        order.addAll(block)
+        after.filterTo(order) { it !in blockSet }
+        val seen = order.toHashSet()
+        for (i in 0 until size) if (seen.add(i)) order.add(i)
+        if (order.size != size) return
+
+        player.setShuffleOrder(DefaultShuffleOrder(order.toIntArray(), System.currentTimeMillis()))
+    }
 
     fun playNext(items: List<MediaItem>) {
         if (items.isEmpty()) return
         // If queue is empty or player is idle, play immediately instead
         if (player.mediaItemCount == 0 || player.playbackState == STATE_IDLE) {
+            pendingPlayNext.clear()
             player.setMediaItems(items)
             player.prepare()
-            consecutivePlayNextCount = 0
             // Don't start local playback if casting
             if (castConnectionHandler?.isCasting?.value != true) {
                 player.play()
@@ -1886,70 +1958,18 @@ class MusicService :
             indicesToRemove.sortedDescending().forEach { index ->
                 player.removeMediaItem(index)
             }
+            pendingPlayNext.removeAll(itemIds)
         }
 
-        val insertIndex = (player.currentMediaItemIndex + 1 + consecutivePlayNextCount).coerceIn(0, player.mediaItemCount)
-        val shuffleEnabled = player.shuffleModeEnabled
+        // New songs go after the ones already waiting, so several "Play next"s play in the order they were added.
+        val current = player.currentMediaItemIndex
+        val lastPending = pendingPlayNextIndices().lastOrNull()?.takeIf { it > current }
+        val insertIndex = ((lastPending ?: current) + 1).coerceIn(0, player.mediaItemCount)
 
-        // Insert items after previously 'play next'-ed items in sequential FIFO order
+        pendingPlayNext.addAll(items.map { it.mediaId })
         player.addMediaItems(insertIndex, items)
         player.prepare()
-        consecutivePlayNextCount += items.size
-
-        if (shuffleEnabled) {
-            // Rebuild shuffle order so that newly inserted items are played in order after current track
-            val timeline = player.currentTimeline
-            if (!timeline.isEmpty) {
-                val size = timeline.windowCount
-                val currentIndex = player.currentMediaItemIndex
-
-                // Newly inserted indices for this batch
-                val newIndices = (insertIndex until (insertIndex + items.size)).toSet()
-
-                // Collect existing shuffle traversal order excluding current index and new indices
-                val orderAfter = mutableListOf<Int>()
-                var idx = currentIndex
-                while (true) {
-                    idx = timeline.getNextWindowIndex(idx, Player.REPEAT_MODE_OFF, /*shuffleModeEnabled=*/true)
-                    if (idx == C.INDEX_UNSET) break
-                    if (idx != currentIndex && idx !in newIndices) orderAfter.add(idx)
-                }
-
-                val prevList = mutableListOf<Int>()
-                var pIdx = currentIndex
-                while (true) {
-                    pIdx = timeline.getPreviousWindowIndex(pIdx, Player.REPEAT_MODE_OFF, /*shuffleModeEnabled=*/true)
-                    if (pIdx == C.INDEX_UNSET) break
-                    if (pIdx != currentIndex && pIdx !in newIndices) prevList.add(pIdx)
-                }
-                prevList.reverse() // preserve original forward order
-
-                val existingOrder = (orderAfter + prevList).filter { it != currentIndex && it !in newIndices }
-
-                // Build new shuffle order: current -> all play-next items in sequential order -> remaining queue
-                val playNextStart = player.currentMediaItemIndex + 1
-                val playNextEnd = (playNextStart + consecutivePlayNextCount).coerceAtMost(size)
-                val playNextBlock = (playNextStart until playNextEnd).toList()
-
-                val finalOrder = IntArray(size)
-                var pos = 0
-                finalOrder[pos++] = currentIndex
-                playNextBlock.forEach { if (it in 0 until size && it != currentIndex && !finalOrder.take(pos).contains(it)) finalOrder[pos++] = it }
-                existingOrder.forEach { if (pos < size && !finalOrder.take(pos).contains(it)) finalOrder[pos++] = it }
-
-                // Fill any missing indices (safety) to ensure a full permutation
-                if (pos < size) {
-                    for (i in 0 until size) {
-                        if (!finalOrder.take(pos).contains(i)) {
-                            finalOrder[pos++] = i
-                            if (pos == size) break
-                        }
-                    }
-                }
-
-                player.setShuffleOrder(DefaultShuffleOrder(finalOrder, System.currentTimeMillis()))
-            }
-        }
+        enforcePlayNextOrder()
     }
 
     
@@ -2193,7 +2213,8 @@ class MusicService :
             }
         }
         previousMediaItemIndex = player.currentMediaItemIndex
-        consecutivePlayNextCount = 0
+        // The song that just started is no longer waiting in the play-next line.
+        player.currentMediaItem?.mediaId?.let { pendingPlayNext.remove(it) }
 
         lastPlaybackSpeed = -1.0f // force update song
 
@@ -2497,6 +2518,10 @@ class MusicService :
         }
         if (events.containsAny(EVENT_TIMELINE_CHANGED, EVENT_POSITION_DISCONTINUITY)) {
             currentMediaMetadata.value = player.currentMetadata
+        }
+        if (events.containsAny(EVENT_TIMELINE_CHANGED, Player.EVENT_SHUFFLE_MODE_ENABLED_CHANGED)) {
+            // Songs added later (auto-loaded radio/playlist pages) must not land between the play-next songs.
+            enforcePlayNextOrder()
         }
         if (events.containsAny(EVENT_POSITION_DISCONTINUITY, Player.EVENT_MEDIA_ITEM_TRANSITION)) {
             playerSilenceProcessors.values.forEach { it.resetTracking() }
